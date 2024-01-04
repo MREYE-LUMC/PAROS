@@ -6,29 +6,26 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ["3.9", "3.10", "3.11"]
+        python: ["3.9", "3.10", "3.11", "3.12"]
+    uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
+    with:
+      python-version: ${{ matrix.python }}
     steps:
-        - uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
-          with:
-            python-version: ${{ matrix.python }}
-        - name: Build PAROS
-          run: hatch build
+      - name: Build PAROS
+        run: hatch build
 
   format:
     name: Format and lint
-    runs-on: ubuntu-latest
+    uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
     steps:
-        - uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
-        - name: Format and lint
-          run: hatch fmt --check
+      - name: Format and lint
+        run: hatch fmt --check
 
   jupyter:
     name: Test Jupyter notebooks
-    runs-on: ubuntu-latest
+    uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
     steps:
-        - uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
-        - name: Format and lint
-          run: hatch run jupyter:run-all
+      - name: Format and lint
+        run: hatch run jupyter:run-all

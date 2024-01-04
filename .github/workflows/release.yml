@@ -9,20 +9,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
     
     permissions:
       contents: read
 
     steps:
-    - uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
-    - name: Build package
-      run: python -m build
-    - name: Upload dist
-      uses: actions/upload-artifact@v4
-      with:
-        name: zospy_dist
-        path: "dist/"
+      - name: Build package
+        run: python -m build
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: zospy_dist
+          path: "dist/"
         
   publish_to_pypi:
     name: Publish to PyPI
@@ -33,13 +32,13 @@ jobs:
       id-token: write
 
     steps:
-    - name: Download dist
-      uses: actions/download-artifact@v4
-      with:
-        name: zospy_dist
-        path: dist
-    - name: Publish package
-      uses: pypa/gh-action-pypi-publish@v1.8.11
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: zospy_dist
+          path: dist
+      - name: Publish package
+        uses: pypa/gh-action-pypi-publish@v1.8.11
         
   upload_to_github:
     name: Upload to GitHub
@@ -51,20 +50,20 @@ jobs:
       contents: write
 
     steps:
-    - name: Download dist
-      uses: actions/download-artifact@v4
-      with:
-        name: zospy_dist
-        path: dist
-    - name: Upload wheels to GitHub release
-      uses: svenstaro/upload-release-action@2.7.0
-      with:
-        tag: ${{ github.ref }}
-        file: "dist/*.whl"
-        file_glob: true
-    - name: Upload dist to GitHub release
-      uses: svenstaro/upload-release-action@2.7.0
-      with:
-        tag: ${{ github.ref }}
-        file: "dist/*.tar.gz"
-        file_glob: true
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: zospy_dist
+          path: dist
+      - name: Upload wheels to GitHub release
+        uses: svenstaro/upload-release-action@2.7.0
+        with:
+          tag: ${{ github.ref }}
+          file: "dist/*.whl"
+          file_glob: true
+      - name: Upload dist to GitHub release
+        uses: svenstaro/upload-release-action@2.7.0
+        with:
+          tag: ${{ github.ref }}
+          file: "dist/*.tar.gz"
+          file_glob: true
