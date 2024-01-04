@@ -30,10 +30,13 @@ dependencies = [
 ]
 
 [tool.hatch.envs.jupyter.scripts]
+# Run a single notebook. Run as hatch run jupyter:run-notebook <notebook>
+run-notebook = "jupyter nbconvert --to notebook --inplace --execute {args}"
 # Run all notebooks. Run as hatch run jupyter:run-all
 run-all = [
-    "jupyter nbconvert --to notebook --inplace --execute examples/calculate_ocular_magnification.ipynb",
-    "jupyter nbconvert --to notebook --inplace --execute examples/fundus_camera_calibration.ipynb"
+    "run-notebook examples/calculate_ocular_magnification.ipynb",
+    "run-notebook examples/fundus_camera_calibration.ipynb",
+    "run-notebook voici/simple_example.ipynb",
 ]
 
 [tool.hatch.version]

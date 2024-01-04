@@ -1,4 +1,4 @@
-"""Paraxial central scaling of fundus images
+"""Paraxial central scaling of fundus images.
 
 This module implements a paraxial method to calculate the central scaling
 of fundus images. The scaling is calculated by defining an eye using the

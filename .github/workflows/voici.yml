@@ -28,7 +28,7 @@ jobs:
 
       - name: Build the JupyterLite site
         shell: bash -l {0}
-        run: cd voici && voici build --contents content --output-dir dist
+        run: cd voici && voici build --contents simple_example.ipynb --output-dir dist
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

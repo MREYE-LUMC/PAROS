@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+"""Paraxial optical modelling of an eye phantom for fundus camera calibrations.
+
+This module contains classes to model an eye phantom used to calibrate a fundus camera.
+Lenses are specified using the `Lens` class. The full phantom is modeled with the `EyePhantom` class.
+Lens and phantom data is included in `PAROS.data`.
+This module can be used in conjunction with `PAROS.fundscale` to calculate the central magnification of the phantom.
+"""
+
 from __future__ import annotations
 
 from typing import Literal
