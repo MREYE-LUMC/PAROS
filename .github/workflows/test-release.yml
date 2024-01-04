@@ -1,4 +1,4 @@
-name: Publish to PyPI
+name: Publish to TestPyPI
 
 on:
   # Manual trigger
@@ -29,13 +29,14 @@ jobs:
       - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
-          name: zospy_dist
+          name: paros_dist
           path: "dist/"
         
   publish_to_testpypi:
-    name: Publish to PyPI
+    name: Publish to TestPyPI
     runs-on: ubuntu-latest
     environment: TestPyPI
+    needs: build
 
     permissions:
       id-token: write
@@ -44,7 +45,7 @@ jobs:
       - name: Download dist
         uses: actions/download-artifact@v4
         with:
-          name: zospy_dist
+          name: paros_dist
           path: dist
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@v1.8.11
