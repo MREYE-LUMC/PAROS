@@ -1,0 +1,42 @@
+name: Publish to PyPI
+
+on:
+  # Manual trigger
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+
+    steps:
+    - uses: MREYE-LUMC/PAROS/.github/workflows/setup.yml@main
+    - name: Build package
+      run: python -m build
+    - name: Upload dist
+      uses: actions/upload-artifact@v4
+      with:
+        name: zospy_dist
+        path: "dist/"
+        
+  publish_to_testpypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    environment: TestPyPI
+
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download dist
+      uses: actions/download-artifact@v4
+      with:
+        name: zospy_dist
+        path: dist
+    - name: Publish package
+      uses: pypa/gh-action-pypi-publish@v1.8.11
