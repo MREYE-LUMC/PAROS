@@ -1,0 +1,61 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "PAROS"
+description = "PARaxial Optical fundus Scaling (PAROS)"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Lennart J. Pors", email = "l.j.pors@lumc.nl" },
+    { name = "Jan-Willem M. Beenakker", email = "j.w.m.beenakker@lumc.nl" },
+    { name = "Corné Haasjes", email = "c.haasjes@lumc.nl" }
+]
+keywords = [
+    "paraxial optics",
+    "ophthalmology"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+    "Topic :: Scientific/Engineering :: Physics",
+]
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scipy",
+    "sympy",
+]
+requires-python = ">=3.9"
+dynamic = ["version"]
+
+[tool.hatch.envs.jupyter]
+dependencies = [
+    "jupyter"
+]
+
+[tool.hatch.envs.jupyter.scripts]
+# Run a single notebook. Run as hatch run jupyter:run-notebook <notebook>
+run-notebook = "jupyter nbconvert --to notebook --inplace --execute {args}"
+# Run all notebooks. Run as hatch run jupyter:run-all
+run-all = [
+    "run-notebook examples/calculate_ocular_magnification.ipynb",
+    "run-notebook examples/fundus_camera_calibration.ipynb",
+    "run-notebook voici/simple_example.ipynb",
+]
+
+[tool.hatch.version]
+path = "PAROS/__init__.py"
+
+[tool.ruff.lint]
+extend-ignore = [
+    "B028",
+    "EM101",
+    "EM102",
+    "N999",
+    "TCH002",
+    "TRY003",
+]
