@@ -5,6 +5,8 @@ build-backend = "hatchling.build"
 [project]
 name = "PAROS"
 description = "PARaxial Optical fundus Scaling (PAROS)"
+readme = "README.md"
+license = { file = "LICENSE" }
 authors = [
     { name = "Lennart J. Pors", email = "l.j.pors@lumc.nl" },
     { name = "Jan-Willem M. Beenakker", email = "j.w.m.beenakker@lumc.nl" },
@@ -13,6 +15,12 @@ authors = [
 keywords = [
     "paraxial optics",
     "ophthalmology"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "Typing :: Typed",
+    "Topic :: Scientific/Engineering :: Physics",
 ]
 dependencies = [
     "matplotlib",
