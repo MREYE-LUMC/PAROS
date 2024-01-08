@@ -8,7 +8,13 @@ The code is provided as is, without any warranty, under the [MIT license](LICENS
 
 ## Basic usage
 
-A basic version of PAROS can most easily be run online here: [Basic version](https://mreye-lumc.github.io/PAROS)
+
+### Try it online
+A basic version of PAROS can most easily be run online here: [basic version](https://mreye-lumc.github.io/PAROS)
+
+[![Try PAROS online](https://raw.githubusercontent.com/MREYE-LUMC/PAROS/assets/assets/images/screenshot.png)](https://mreye-lumc.GitHub.io/PAROS)
+
+### Install the library
 
 The full package is also available for download via PiP:
 
