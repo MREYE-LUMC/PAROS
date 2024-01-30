@@ -1,6 +1,6 @@
 # PARaxial Optical fundus Scaling (PAROS)
 
-Paros is a method to calculate the magnification of fundus images based on the optical characteristics of the patient's eye. The full method and validation are described in (article reference to be added upon acceptance)
+Paros is a method to calculate the magnification of fundus images based on the optical characteristics of the patient's eye. The full method and validation are described in Pors LJ, Haasjes C, van Vught L, et al. Correction Method for Optical Scaling of Fundoscopy Images: Development, Validation, and First Implementation. Invest Ophthalmol Vis Sci. 2024;65(1):43. [doi:10.1167/iovs.65.1.43](https://iovs.arvojournals.org/article.aspx?articleid=2793314)
 
 ## License
 
@@ -41,7 +41,7 @@ Please find here a table of known camera calibration constants; this can be adde
 
 ## Referencing
 
-When publishing results obtained with this package, please cite the paper that describes the full method and validation: Pors, L.J., et al. (2023). "Correction method for optical scaling of fundoscopy images: development, validation and first implementation" in press.
+When publishing results obtained with this package, please cite the paper that describes the full method and validation: Pors LJ, Haasjes C, van Vught L, et al. Correction Method for Optical Scaling of Fundoscopy Images: Development, Validation, and First Implementation. Invest Ophthalmol Vis Sci. 2024;65(1):43. [doi:10.1167/iovs.65.1.43](https://iovs.arvojournals.org/article.aspx?articleid=2793314)
 
 ## Contributing
 
