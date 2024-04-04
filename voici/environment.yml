@@ -2,7 +2,7 @@ channels:
   - https://repo.mamba.pm/emscripten-forge
   - https://repo.mamba.pm/conda-forge
 dependencies:
-  - python=3.10
+  - python=3.11
   - xeus-lite
   - xeus-python
   - ipywidgets
