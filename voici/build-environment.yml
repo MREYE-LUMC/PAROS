@@ -5,4 +5,4 @@ dependencies:
   - python
   - pip
   - pip:
-    - voici=0.6
+    - voici==0.6
