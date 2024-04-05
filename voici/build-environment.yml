@@ -4,8 +4,5 @@ channels:
 dependencies:
   - python
   - pip
-  - jupyter_server
-  - voici
-  - jupyterlite-core[version='>=0.2.0,<0.3.0']
-  - jupyterlite-xeus-python[version='>=0.9.2,<0.10.0']
-  - python-libarchive-c
+  - pip:
+    - voici==0.6
