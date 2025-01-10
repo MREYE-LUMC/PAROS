@@ -1,0 +1,64 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Pors
+  given-names: Lennart
+  orcid: "https://orcid.org/0000-0003-0907-6637"
+- family-names: Haasjes
+  given-names: Corné
+  orcid: "https://orcid.org/0000-0003-0187-4116"
+- family-names: Beenakker
+  given-names: Jan-Willem M.
+  orcid: "https://orcid.org/0000-0003-0479-5587"
+contact:
+- family-names: Beenakker
+  given-names: Jan-Willem M.
+  orcid: "https://orcid.org/0000-0003-0479-5587"
+message: If you use this software, please cite our article in 
+  Investigative Ophthalmology & Visual Science.
+preferred-citation:
+  authors:
+  - family-names: Pors
+    given-names: Lennart
+    orcid: "https://orcid.org/0000-0003-0907-6637"
+  - family-names: Haasjes
+    given-names: Corné
+    orcid: "https://orcid.org/0000-0003-0187-4116"
+  - family-names: Vught
+    given-names: Luc
+    name-particle: van
+    orcid: "https://orcid.org/0000-0001-8290-9071"
+  - family-names: Hoes
+    given-names: Noor P.
+    orcid: https://orcid.org/0009-0005-2024-9676
+  - family-names: Luyten
+    given-names: Gregorius P.M.
+    orcid: https://orcid.org/0000-0003-3685-3868
+  - family-names: Rijn
+    given-names: Gwyneth A.
+    name-particle: van
+    orcid: https://orcid.org/0000-0003-3835-1087
+  - family-names: Vu
+    given-names: T.H. Khanh
+    orcid: https://orcid.org/0000-0003-1809-4001
+  - family-names: Rasch
+    given-names: Coen R.N.
+    orcid: https://orcid.org/0000-0001-6950-3376
+  - family-names: Horeweg
+    given-names: Nanda
+    orcid: https://orcid.org/0000-0002-8581-4753
+  - family-names: Beenakker
+    given-names: Jan-Willem M.
+    orcid: "https://orcid.org/0000-0003-0479-5587"
+  date-published: 2024-01-25
+  doi: 10.1167/iovs.65.1.43
+  issn: 1552-5783
+  issue: 1
+  journal: Investigative Ophthalmology & Visual Science
+  start: 43
+  title: "Correction Method for Optical Scaling of Fundoscopy Images: Development, Validation, and First Implementation"
+  type: article
+  url: "https://iovs.arvojournals.org/article.aspx?articleid=2793314"
+  volume: 65
+title: "PARaxial Optical fundus Scaling (PAROS)"
+repository-code: 'https://github.com/MREYE-LUMC/PAROS'
+license: MIT
