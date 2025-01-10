@@ -94,9 +94,7 @@ def spherical_interface(n_in: float, n_out: float, curvature: float) -> sp.Matri
     return sp.Matrix([[1, 0], [(n_in - n_out) / (n_out * curvature), (n_in / n_out)]])
 
 
-def calculate_piol_curvature(
-    piol_power: float, thickness: float = 0.2e-3, n_iol: float = 1.47
-) -> float:
+def calculate_piol_curvature(piol_power: float, thickness: float = 0.2e-3, n_iol: float = 1.47) -> float:
     """Calculate the radius of curvature for a phakic IOL.
 
     Calculate the IOL radii for a pIOL with power `piol_power`. The front and back
@@ -264,18 +262,11 @@ class Eye:
         else:
             raise ValueError(f"Model type {NType} is undefined.")
 
-        self.R_corF, self.R_corB, self.R_lensF, self.R_lensB = sp.symbols(
-            "R_corF R_corB R_lensF R_lensB"
-        )
-        self.D_cor, self.D_ACD, self.D_lens, self.D_vitr = sp.symbols(
-            "D_cor D_ACD D_lens D_vitr"
-        )
+        self.R_corF, self.R_corB, self.R_lensF, self.R_lensB = sp.symbols("R_corF R_corB R_lensF R_lensB")
+        self.D_cor, self.D_ACD, self.D_lens, self.D_vitr = sp.symbols("D_cor D_ACD D_lens D_vitr")
 
         self.axial_length = (
-            self.geometry["D_cor"]
-            + self.geometry["D_ACD"]
-            + self.geometry["D_lens"]
-            + self.geometry["D_vitr"]
+            self.geometry["D_cor"] + self.geometry["D_ACD"] + self.geometry["D_lens"] + self.geometry["D_vitr"]
         )
         self.ray_transfer_matrix = self.calculate_ray_transfer_matrix()
 
@@ -283,9 +274,7 @@ class Eye:
         return f"{self.name}"
 
     @staticmethod
-    def _build_geometry_dictionary(
-        model_type: EyeModelType, partial_geometry: dict[str, float] | None = None
-    ):
+    def _build_geometry_dictionary(model_type: EyeModelType, partial_geometry: dict[str, float] | None = None):
         if model_type == "Navarro":
             geometry = {
                 "R_corF": -7.72e-3,
@@ -370,17 +359,9 @@ class Eye:
             phakic_iol = sp.Matrix([[1, 0], [0, 1]])
 
         # Retina to cornea
-        return (
-            cornea
-            * uniform_medium(self.D_ACD)
-            * phakic_iol
-            * lens
-            * uniform_medium(self.D_vitr)
-        )
+        return cornea * uniform_medium(self.D_ACD) * phakic_iol * lens * uniform_medium(self.D_vitr)
 
-    def adjust_lens_back(
-        self, target_refraction: float, *, update_model: bool = False
-    ) -> tuple[float, float]:
+    def adjust_lens_back(self, target_refraction: float, *, update_model: bool = False) -> tuple[float, float]:
         """Fit the lens back curvature to the eye's refraction.
 
         A corrective lens (glasses) for an eye with `target_refraction` is place in
@@ -405,15 +386,11 @@ class Eye:
         n_glasses = 1.5
         r_glasses = 2.0 * (n_glasses - 1.0) / (target_refraction + 0.0000000001)
 
-        m_glasses = spherical_interface(n_glasses, 1, -r_glasses) * spherical_interface(
-            1, n_glasses, r_glasses
-        )
+        m_glasses = spherical_interface(n_glasses, 1, -r_glasses) * spherical_interface(1, n_glasses, r_glasses)
 
         # Reversed eye with glasses
         # Assuming average vertex distance of 1.4cm
-        matrix_glasses_eye = (
-            m_glasses * uniform_medium(0.014) * self.ray_transfer_matrix
-        )
+        matrix_glasses_eye = m_glasses * uniform_medium(0.014) * self.ray_transfer_matrix
         temp_geometry = copy.deepcopy(self.geometry)
 
         temp_geometry.pop("R_lensB")
@@ -458,14 +435,10 @@ class Eye:
         """
         n_glasses = 1.5
         R = sp.symbols("R")  # noqa: N806
-        glasses = spherical_interface(n_glasses, 1, -R * 10**-3) * spherical_interface(
-            1, n_glasses, R * 10**-3
-        )
+        glasses = spherical_interface(n_glasses, 1, -R * 10**-3) * spherical_interface(1, n_glasses, R * 10**-3)
         eye = self.evaluate_matrix()
 
-        glasses_curvature_solutions = sp.solveset(
-            (glasses * uniform_medium(0.014) * eye)[1, 1], R
-        )
+        glasses_curvature_solutions = sp.solveset((glasses * uniform_medium(0.014) * eye)[1, 1], R)
         if len(list(glasses_curvature_solutions)) != 1:
             warn(f"Multiple solutions found: {glasses_curvature_solutions}")
 
@@ -542,32 +515,23 @@ class Camera:
         self.n_glas = 1.5
         self.a1_value = a1
 
-        self.condenser_lens = spherical_interface(
-            self.n_glas, 1.0, -self.F_cond
-        ) * spherical_interface(1.0, self.n_glas, self.F_cond)
-        self.focus_lens = spherical_interface(
-            self.n_glas, 1.0, -self.R_foc
-        ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix(
-            [[1 + self.a1 / self.R_foc, 0], [0, 1.0 / (1 + self.a1 / self.R_foc)]]
+        self.condenser_lens = spherical_interface(self.n_glas, 1.0, -self.F_cond) * spherical_interface(
+            1.0, self.n_glas, self.F_cond
         )
+        self.focus_lens = spherical_interface(self.n_glas, 1.0, -self.R_foc) * spherical_interface(
+            1.0, self.n_glas, self.R_foc
+        )
+        self.correction_term = sp.Matrix([[1 + self.a1 / self.R_foc, 0], [0, 1.0 / (1 + self.a1 / self.R_foc)]])
         self.ray_transfer_matrix = (
-            self.correction_term
-            * uniform_medium(self.d_CCD)
-            * self.focus_lens
-            * self.condenser_lens
+            self.correction_term * uniform_medium(self.d_CCD) * self.focus_lens * self.condenser_lens
         )
 
         self.M_camera_alg = self.ray_transfer_matrix
 
         if F_cond and (a1 is not None):
-            self.ray_transfer_matrix = self.M_camera_alg.evalf(
-                subs={self.F_cond: F_cond, self.a1: a1}
-            )
+            self.ray_transfer_matrix = self.M_camera_alg.evalf(subs={self.F_cond: F_cond, self.a1: a1})
 
-    def calculate_focus_lens_radius(
-        self, eye_matrix: sp.Matrix, distance_eye_camera: float = 0.05
-    ) -> float:
+    def calculate_focus_lens_radius(self, eye_matrix: sp.Matrix, distance_eye_camera: float = 0.05) -> float:
         """Calculate the radius of curvature of the focus lens.
 
         Solves for the radius of curvature of the camera's focus lens, so that the image
@@ -586,9 +550,7 @@ class Camera:
         float
             Radius of curvature of the focus lens, in meters.
         """
-        system_matrix = (
-            self.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye_matrix
-        )
+        system_matrix = self.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye_matrix
 
         # Ror contact cameras such as the Panoret fundus camera, the refractive index (of air) needs to be changed to
         # that of the medium used between the eye and camera. This can be done by changing the use of uniform_medium()
@@ -611,16 +573,12 @@ class Camera:
         *,
         return_focus_lens_curvature: bool = False,
     ) -> sp.Matrix | tuple[sp.Matrix, float]:
-        system_matrix = (
-            self.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye_matrix
-        )
+        system_matrix = self.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye_matrix
 
         # For contact cameras such as the Panoret fundus camera, the refractive index (of air) needs to be changed to
         # that of the medium use dbetween the eye and camera. This can be done by changing the use of uniform_medium()
         # to medium_change().
-        focus_lens_curvature = self.calculate_focus_lens_radius(
-            eye_matrix, distance_eye_camera
-        )
+        focus_lens_curvature = self.calculate_focus_lens_radius(eye_matrix, distance_eye_camera)
         if return_focus_lens_curvature:
             return (
                 system_matrix.evalf(subs={self.R_foc: focus_lens_curvature}),
@@ -683,11 +641,7 @@ def calculate_magnification(
     """
     glasses_curvature, glasses_power = eye.calculate_refraction(display=False)
 
-    if (
-        not suppress_warnings
-        and abs(glasses_power - eye.spherical_equivalent)
-        > _MAXIMUM_REFRACTION_DEVIATION
-    ):
+    if not suppress_warnings and abs(glasses_power - eye.spherical_equivalent) > _MAXIMUM_REFRACTION_DEVIATION:
         warn(
             f"model refraction {glasses_power:.2f} not matching clinical refraction"
             f" {eye.spherical_equivalent:.2f} for {eye.name}"
@@ -696,22 +650,14 @@ def calculate_magnification(
     # For contact cameras such as the Panoret fundus camera, this refractive index (of air) needs to be changed to that
     # of the medium between the eye and camera. This can be done by changing the use of uniform_medium() to
     # medium_change().
-    system_matrix = (
-        camera.ray_transfer_matrix
-        * uniform_medium(distance_eye_camera)
-        * eye.evaluate_matrix()
-    )
+    system_matrix = camera.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye.evaluate_matrix()
 
     if focus_lens_radius is None:
         # system is in focus so B=0
         solutions = list(sp.solve(system_matrix[0, 1] + 0.00001, camera.R_foc))
-        focus_lens_radius = solutions[
-            np.argmax(np.abs(np.array(solutions) + camera.a1_value))
-        ]
+        focus_lens_radius = solutions[np.argmax(np.abs(np.array(solutions) + camera.a1_value))]
 
-    focused_system_matrix = system_matrix.evalf(
-        subs=({camera.R_foc: focus_lens_radius})
-    )
+    focused_system_matrix = system_matrix.evalf(subs=({camera.R_foc: focus_lens_radius}))
 
     magnification: float = focused_system_matrix[0, 0]
 

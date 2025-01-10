@@ -41,15 +41,11 @@ def get_camera_calibration_data(manufacturer: str, camera: str) -> pd.DataFrame:
         raise KeyError(f"Manufacturer {manufacturer} does not exist.")
 
     try:
-        camera_data_file = cast(
-            Path, calibration.joinpath(manufacturer, camera + ".csv")
-        )
+        camera_data_file = cast(Path, calibration.joinpath(manufacturer, camera + ".csv"))
 
         return pd.read_csv(camera_data_file)
     except FileNotFoundError as e:
-        raise KeyError(
-            f"Camera {camera} does not exist for manufacturer {manufacturer}."
-        ) from e
+        raise KeyError(f"Camera {camera} does not exist for manufacturer {manufacturer}.") from e
 
 
 def get_lens_data(name: str) -> pd.DataFrame:
