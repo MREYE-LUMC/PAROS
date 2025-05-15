@@ -32,6 +32,10 @@ dependencies = [
 requires-python = ">=3.9"
 dynamic = ["version"]
 
+[tool.hatch.envs.default]
+installer = "uv"
+path = ".venv"
+
 [tool.hatch.envs.jupyter]
 dependencies = [
     "jupyter"
@@ -58,4 +62,9 @@ extend-ignore = [
     "N999",
     "TCH002",
     "TRY003",
+]
+
+[dependency-groups]
+dev = [
+    "jupyter>=1.1.1",
 ]
