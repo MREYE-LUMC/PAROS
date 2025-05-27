@@ -11,7 +11,7 @@ The code is provided as is, without any warranty, under the [MIT license](LICENS
 ### Try it online
 A basic version of PAROS can most easily be run online here: [basic version](https://demo.mreye.nl/PAROS)
 
-[![Try PAROS online](.github/assets/screenshot.png)](https://mreye-lumc.GitHub.io/PAROS)
+[![Try PAROS online](.github/assets/screenshot.png)](https://demo.mreye.nl/PAROS)
 
 ### Install the library
 
