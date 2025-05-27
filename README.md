@@ -8,15 +8,14 @@ The code is provided as is, without any warranty, under the [MIT license](LICENS
 
 ## Basic usage
 
-
 ### Try it online
-A basic version of PAROS can most easily be run online here: [basic version](https://mreye-lumc.github.io/PAROS)
+A basic version of PAROS can most easily be run online here: [basic version](https://demo.mreye.nl/PAROS)
 
-[![Try PAROS online](https://raw.githubusercontent.com/MREYE-LUMC/PAROS/assets/assets/images/screenshot.png)](https://mreye-lumc.GitHub.io/PAROS)
+[![Try PAROS online](.github/assets/screenshot.png)](https://mreye-lumc.GitHub.io/PAROS)
 
 ### Install the library
 
-The full package is also available for download via PiP:
+The full package is also available on [PyPI](https://pypi.org/project/PAROS):
 
 ```
 pip install PAROS
@@ -24,8 +23,8 @@ pip install PAROS
 
 PAROS consists of two main functions: 
 
-- ‘fundus_camera_calibration.ipynb’: a method to calibrate camera using eye phantom measurements. 
-- ‘calculate_ocular_magnification.ipynb’: a method to calculate magnification fundus images of a subject. 
+- `fundus_camera_calibration.ipynb`: a method to calibrate camera using eye phantom measurements. 
+- `calculate_ocular_magnification.ipynb`: a method to calculate magnification fundus images of a subject. 
 
 ## Implementation 
 
