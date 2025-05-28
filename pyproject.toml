@@ -48,7 +48,6 @@ run-notebook = "jupyter nbconvert --to notebook --inplace --execute {args}"
 run-all = [
     "run-notebook examples/calculate_ocular_magnification.ipynb",
     "run-notebook examples/fundus_camera_calibration.ipynb",
-    "run-notebook voici/simple_example.ipynb",
 ]
 
 [tool.hatch.version]

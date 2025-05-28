@@ -1,8 +1,0 @@
-name: voici
-channels:
-  - conda-forge
-dependencies:
-  - python
-  - pip
-  - pip:
-    - voici==0.6
