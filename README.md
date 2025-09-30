@@ -9,7 +9,7 @@ The code is provided as is, without any warranty, under the [MIT license](LICENS
 ## Basic usage
 
 ### Try it online
-A basic version of PAROS can most easily be run online here: [basic version](https://demo.mreye.nl/PAROS)
+A basic version of PAROS can most easily be run online here: [basic version](https://demo.mreye.nl/paros)
 
 [![Try PAROS online](.github/assets/screenshot.png)](https://demo.mreye.nl/PAROS)
 
