@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "versioningit"]
 build-backend = "hatchling.build"
 
 [project]
@@ -40,7 +40,8 @@ run-all = [
 ]
 
 [tool.hatch.version]
-path = "PAROS/__init__.py"
+source = "versioningit"
+default-version = "0.0.0+unknown"
 
 [tool.hatch.envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
