@@ -35,8 +35,8 @@ The implementation of PAROS in this repository is functional for the camera in o
 Please find here a table of known camera calibration constants; this can be added upon by other contributors. 
 | Camera type     | CCD type | Condenser lens power (D) | First order calibration term |
 | --------------- | -------- | ------------------------ | ---------------------------- |
-| Topcon TRC-50DX |          | 38.0                     | -0.011                       |
-| Topcon TRC-50IX |          | 38.0                     | -0.012                       |
+| Topcon TRC-50DX |          | 37.6                     | 0.03481                      |
+| Topcon TRC-50IX |          | 37.7                     | 0.03226                      |
 
 ## Referencing
 
