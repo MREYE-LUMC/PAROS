@@ -3,18 +3,12 @@ name: Continuous Integration
 on:
   - push
 
-.python-versions: &python-versions
-  - "3.9"
-  - "3.10"
-  - "3.11"
-  - "3.12"
-
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: *python-versions
+        python: &python-versions ["3.9", "3.10", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v6
       - name: Set up uv
