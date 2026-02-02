@@ -16,7 +16,7 @@ jobs:
         id: setup-uv
         uses: astral-sh/setup-uv@v7
       - name: Build PAROS
-        run: uvx hatch --python ${{ matrix.python }} build
+        run: uvx --python ${{ matrix.python }} hatch build
 
   format:
     name: Format and lint
@@ -38,4 +38,4 @@ jobs:
         id: setup-uv
         uses: astral-sh/setup-uv@v7
       - name: Format and lint
-        run: uvx hatch --python ${{ matrix.python }} run jupyter:run-all
+        run: uvx --python ${{ matrix.python }} hatch run jupyter:run-all
