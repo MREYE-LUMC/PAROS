@@ -2,14 +2,19 @@ name: Continuous Integration
 
 on:
   - push
-  - pull_request
+
+.python-versions: &python-versions
+  - "3.9"
+  - "3.10"
+  - "3.11"
+  - "3.12"
 
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python: ["3.9", "3.10", "3.11", "3.12"]
+        python: *python-versions
     steps:
       - uses: actions/checkout@v6
       - name: Set up uv
@@ -32,6 +37,9 @@ jobs:
   jupyter:
     name: Test Jupyter notebooks
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: *python-versions
     steps:
       - uses: actions/checkout@v6
       - name: Set up uv

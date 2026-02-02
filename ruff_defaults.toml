@@ -656,7 +656,7 @@ select = [
 ban-relative-imports = "all"
 
 [lint.isort]
-known-first-party = ["paros"]
+known-first-party = ["PAROS"]
 
 [lint.flake8-pytest-style]
 fixture-parentheses = false
