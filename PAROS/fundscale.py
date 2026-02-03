@@ -280,26 +280,26 @@ class RefractiveIndices(TypedDict):
 
 
 DEFAULT_GEOMETRIES: dict[EyeModelType, EyeGeometry] = {
-    "Navarro": {
-        "R_corF": -7.72e-3,
-        "R_corB": -6.50e-3,
-        "R_lensF": -10.20e-3,
-        "R_lensB": +6.00e-3,
-        "D_cor": 0.55e-3,
-        "D_ACD": 3.05e-3,
-        "D_lens": 4.00e-3,
-        "D_vitr": 16.3203e-3,
-    },
-    "VughtIOL": {
-        "R_corF": -7.72e-3,
-        "R_corB": -6.50e-3,
-        "R_lensF": -8.16e-3,
-        "R_lensB": +11.18e-3,
-        "D_cor": 0.55e-3,
-        "D_ACD": 3.05e-3,
-        "D_lens": 0.6896e-3,
-        "D_vitr": 19.3203e-3,
-    },
+    "Navarro": EyeGeometry(
+        R_corF=-7.72e-3,
+        R_corB=-6.50e-3,
+        R_lensF=-10.20e-3,
+        R_lensB=+6.00e-3,
+        D_cor=0.55e-3,
+        D_ACD=3.05e-3,
+        D_lens=4.00e-3,
+        D_vitr=16.3203e-3,
+    ),
+    "VughtIOL": EyeGeometry(
+        R_corF=-7.72e-3,
+        R_corB=-6.50e-3,
+        R_lensF=-8.16e-3,
+        R_lensB=+11.18e-3,
+        D_cor=0.55e-3,
+        D_ACD=3.05e-3,
+        D_lens=0.6896e-3,
+        D_vitr=19.3203e-3,
+    ),
 }
 
 DEFAULT_REFRACTIVE_INDICES: dict[EyeModelType, RefractiveIndices] = {
@@ -394,7 +394,8 @@ class Eye:
 
     @staticmethod
     def _build_geometry_dictionary(
-        model_type: EyeModelType, partial_geometry: PartialEyeGeometry | None = None
+        model_type: EyeModelType,
+        partial_geometry: PartialEyeGeometry | EyeGeometry | None = None,
     ) -> EyeGeometry:
         if model_type not in DEFAULT_GEOMETRIES:
             raise ValueError(f"Model type {model_type} is undefined.")
