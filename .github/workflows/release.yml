@@ -2,7 +2,7 @@ name: Publish to PyPI
 
 on:
   release:
-    types: [released]
+    types: [released, prereleased]
 
 permissions:
   contents: read
@@ -10,7 +10,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: read
 
@@ -20,13 +20,13 @@ jobs:
         id: setup-uv
         uses: astral-sh/setup-uv@v7
       - name: Build package
-        run: uvx hatch build
+        run: uv build
       - name: Upload dist
         uses: actions/upload-artifact@v6
         with:
           name: paros_dist
           path: "dist/"
-        
+
   publish_to_pypi:
     name: Publish to PyPI
     runs-on: ubuntu-latest
@@ -47,13 +47,13 @@ jobs:
         uses: astral-sh/setup-uv@v7
       - name: Publish package
         run: uv publish
-        
+
   upload_to_github:
     name: Upload to GitHub
     runs-on: ubuntu-latest
     if: github.event_name == 'release'
     needs: build
-    
+
     permissions:
       contents: write
 
