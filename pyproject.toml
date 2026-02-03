@@ -19,7 +19,14 @@ classifiers = [
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = ["matplotlib", "numpy", "pandas", "scipy", "sympy"]
+dependencies = [
+    "matplotlib",
+    "numpy",
+    "pandas",
+    "scipy",
+    "sympy",
+    "typing-extensions>=4.12.2 ; python_full_version < '3.11'",
+]
 requires-python = ">=3.9"
 dynamic = ["version"]
 

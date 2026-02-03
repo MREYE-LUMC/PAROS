@@ -24,20 +24,22 @@ from __future__ import annotations
 
 import copy
 import math
-from typing import Literal, NamedTuple, NotRequired, TypedDict, Union
+from sys import version_info
+from typing import Literal, NamedTuple, Union
 from warnings import warn
 
 import numpy as np
 import sympy as sp
 
+if version_info <= (3, 11):
+    from typing_extensions import NotRequired, TypedDict
+else:
+    from typing import NotRequired, TypedDict
+
 sp.init_printing(use_unicode=True)
 
 NumberOrSymbol = Union[int, float, sp.Symbol]
 EyeModelType = Literal["Navarro", "VughtIOL"]
-
-
-def _round_expr(expr: sp.Expr, num_digits: int = 3) -> sp.Expr:
-    return expr.xreplace({n: round(n, num_digits) for n in expr.atoms(sp.Number)})
 
 
 def uniform_medium(thickness: float) -> sp.Matrix:
@@ -655,12 +657,10 @@ class Camera:
         self.focus_lens = spherical_interface(
             self.n_glas, 1.0, -self.R_foc
         ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix(
-            [
-                [1 + self.a1 / self.R_foc, 0],
-                [0, 1.0 / (1 + self.a1 / self.R_foc)],
-            ]
-        )
+        self.correction_term = sp.Matrix([
+            [1 + self.a1 / self.R_foc, 0],
+            [0, 1.0 / (1 + self.a1 / self.R_foc)],
+        ])
         self.ray_transfer_matrix = (
             self.correction_term
             * uniform_medium(self.d_CCD)
