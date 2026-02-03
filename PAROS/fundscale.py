@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import copy
 import math
-from typing import Literal, NamedTuple, Union
+from typing import Literal, NamedTuple, NotRequired, TypedDict, Union
 from warnings import warn
 
 import numpy as np
@@ -177,6 +177,66 @@ def calculate_piol_matrix(
     return piol_matrix * distance_matrix
 
 
+class EyeGeometry(TypedDict, total=True):
+    """Eye geometry parameters.
+
+    All values are in meters. PAROS uses an inverted eye model, so for a normal
+    eye the radii of curvature for the cornea and lens front surfaces are negative.
+
+    Attributes
+    ----------
+    R_corF : float
+        Cornea front radius.
+    R_corB : float
+        Cornea back radius.
+    R_lensF : float
+        Lens front radius.
+    R_lensB : float
+        Lens back radius.
+    D_cor : float
+        Cornea thickness.
+    D_ACD : float
+        Anterior chamber depth.
+    D_lens : float
+        Lens thickness.
+    D_vitr : float
+        Vitreous thickness.
+    SE : float
+        Spherical equivalent of refraction of the eye model.
+    """
+
+    R_corF: float
+    R_corB: float
+    R_lensF: float
+    R_lensB: float
+    D_cor: float
+    D_ACD: float
+    D_lens: float
+    D_vitr: float
+    SE: NotRequired[float]
+
+
+class PartialEyeGeometry(EyeGeometry, total=False):
+    """Eye geometry parameters.
+
+    This class can be used to define a partial eye geometry, in which only a subset
+    of the parameters are specified.
+
+    See Also
+    --------
+    EyeGeometry : Full eye geometry parameters.
+    """
+
+    R_corF: float
+    R_corB: float
+    R_lensF: float
+    R_lensB: float
+    D_cor: float
+    D_ACD: float
+    D_lens: float
+    D_vitr: float
+
+
 class PhakicIOL(NamedTuple):
     """Parameters of a phakic IOL.
 
@@ -198,13 +258,73 @@ class PhakicIOL(NamedTuple):
     lens_distance: NumberOrSymbol
 
 
+class RefractiveIndices(TypedDict):
+    """Refractive indices of the eye media.
+
+    Attributes
+    ----------
+    cor : float
+        Refractive index of the cornea.
+    aq : float
+        Refractive index of the aqueous humor.
+    lens : float
+        Refractive index of the crystalline lens.
+    vit : float
+        Refractive index of the vitreous humor.
+    """
+
+    cor: float
+    aq: float
+    lens: float
+    vit: float
+
+
+DEFAULT_GEOMETRIES: dict[EyeModelType, EyeGeometry] = {
+    "Navarro": {
+        "R_corF": -7.72e-3,
+        "R_corB": -6.50e-3,
+        "R_lensF": -10.20e-3,
+        "R_lensB": +6.00e-3,
+        "D_cor": 0.55e-3,
+        "D_ACD": 3.05e-3,
+        "D_lens": 4.00e-3,
+        "D_vitr": 16.3203e-3,
+    },
+    "VughtIOL": {
+        "R_corF": -7.72e-3,
+        "R_corB": -6.50e-3,
+        "R_lensF": -8.16e-3,
+        "R_lensB": +11.18e-3,
+        "D_cor": 0.55e-3,
+        "D_ACD": 3.05e-3,
+        "D_lens": 0.6896e-3,
+        "D_vitr": 19.3203e-3,
+    },
+}
+
+DEFAULT_REFRACTIVE_INDICES: dict[EyeModelType, RefractiveIndices] = {
+    "Navarro": RefractiveIndices(
+        cor=1.3777,
+        aq=1.3391,
+        lens=1.4222,
+        vit=1.3377,
+    ),
+    "VughtIOL": RefractiveIndices(
+        cor=1.3777,
+        aq=1.3391,
+        lens=1.47,
+        vit=1.3377,
+    ),
+}
+
+
 class Eye:
     """Symbolic representation of an eye model."""
 
     def __init__(
         self,
         name: str = "testEye",
-        geometry: dict[str, float] | None = None,
+        geometry: PartialEyeGeometry | EyeGeometry | None = None,
         model_type: EyeModelType = "Navarro",
         NType: EyeModelType = "Navarro",  # noqa: N803
         refraction: float | None = None,
@@ -222,7 +342,7 @@ class Eye:
         ----------
         name : str
             Name of the eye model.
-        geometry : dict[str, float]
+        geometry : PartialEyeGeometry | None
             Dictionary with numerical geometric parameters of the eye. If `None`, the
             geometry is based on `model_type`. Can be a partial dictionary, in which
             case missing values are based on the eye model specified by `model_type`.
@@ -247,20 +367,10 @@ class Eye:
 
         self.geometry = self._build_geometry_dictionary(model_type, geometry)
 
-        if NType == "Navarro":
-            self.refractive_indices = {
-                "cor": 1.3777,
-                "aq": 1.3391,
-                "lens": 1.4222,
-                "vit": 1.3377,
-            }
-        elif NType == "VughtIOL":
-            self.refractive_indices = {
-                "cor": 1.3777,
-                "aq": 1.3391,
-                "lens": 1.47,
-                "vit": 1.3377,
-            }
+        self.refractive_indices: RefractiveIndices
+
+        if NType in DEFAULT_REFRACTIVE_INDICES:
+            self.refractive_indices = DEFAULT_REFRACTIVE_INDICES[NType].copy()
         else:
             raise ValueError(f"Model type {NType} is undefined.")
 
@@ -284,32 +394,12 @@ class Eye:
 
     @staticmethod
     def _build_geometry_dictionary(
-        model_type: EyeModelType, partial_geometry: dict[str, float] | None = None
-    ):
-        if model_type == "Navarro":
-            geometry = {
-                "R_corF": -7.72e-3,
-                "R_corB": -6.50e-3,
-                "R_lensF": -10.20e-3,
-                "R_lensB": +6.00e-3,
-                "D_cor": 0.55e-3,
-                "D_ACD": 3.05e-3,
-                "D_lens": 4.00e-3,
-                "D_vitr": 16.3203e-3,
-            }
-        elif model_type == "VughtIOL":
-            geometry = {
-                "R_corF": -7.72e-3,
-                "R_corB": -6.50e-3,
-                "R_lensF": -8.16e-3,
-                "R_lensB": +11.18e-3,
-                "D_cor": 0.55e-3,
-                "D_ACD": 3.05e-3,
-                "D_lens": 0.6896e-3,
-                "D_vitr": 19.3203e-3,
-            }
-        else:
+        model_type: EyeModelType, partial_geometry: PartialEyeGeometry | None = None
+    ) -> EyeGeometry:
+        if model_type not in DEFAULT_GEOMETRIES:
             raise ValueError(f"Model type {model_type} is undefined.")
+
+        geometry = DEFAULT_GEOMETRIES[model_type].copy()
 
         if partial_geometry is not None:
             # Estimate the cornea back curvature if it is unspecified and the cornea
@@ -491,8 +581,8 @@ class Eye:
     ) -> tuple[float, sp.Matrix, float]:
         """Calculate the total magnification of the eye - camera system.
 
-        A structure on the central retina is depicted `magnification` times larger
-        on the camera sensor.
+        The magnification is calculated in units of pixels per millimeter, i.e. a structure
+        of 1 mm on the retina is depicted `magnification` times larger on the camera sensor.
 
         Parameters
         ----------
@@ -505,7 +595,7 @@ class Eye:
         Returns
         -------
         magnification : float
-            Central magnification of the eye - camera system.
+            Central magnification of the eye - camera system, in pixels per millimeter.
         focused_system_matrix : sympy.Matrix
             Ray transfer matrix for the full system.
         focus_lens_radius : float
@@ -516,7 +606,7 @@ class Eye:
             eye_matrix, distance_eye_camera, return_focus_lens_curvature=True
         )
 
-        magnification = focused_system_matrix[0, 0]
+        magnification = focused_system_matrix[0, 0] * camera.pixel_density
 
         return magnification, focused_system_matrix, focus_lens_radius
 
@@ -524,15 +614,31 @@ class Eye:
 class Camera:
     def __init__(
         self,
-        F_cond: NumberOrSymbol = None,  # noqa: N803
-        a1: NumberOrSymbol = None,
+        F_cond: NumberOrSymbol | None = None,  # noqa: N803
+        a1: NumberOrSymbol | None = None,
         camera_type: Literal["default"] = "default",
+        pixel_density: int = 100,
     ) -> None:
+        """Create a new camera model.
+
+        Parameters
+        ----------
+        F_cond : NumberOrSymbol
+            Focal length of the condenser lens, in meters.
+        a1 : NumberOrSymbol
+            First order calibration term.
+        camera_type : Literal["default"]
+            Type of camera. Currently only "default" is implemented.
+        pixel_density : int
+            Pixel density of the camera sensor, in pixels per millimeter.
+            Defaults to 100 pixels/mm.
+        """
         self.camera_type = "lensTaylor"
         self.F_cond = sp.Symbol("F_cond", real=True)
         self.d_CCD = sp.symbols("d_CCD")
         self.R_foc = sp.Symbol("R_foc", real=True)  # in m
         self.a1 = sp.Symbol("a1", real=True)
+        self.pixel_density = pixel_density  # pixels per mm
 
         if camera_type == "default":
             self.d_CCD = self.F_cond
@@ -548,9 +654,10 @@ class Camera:
         self.focus_lens = spherical_interface(
             self.n_glas, 1.0, -self.R_foc
         ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix(
-            [[1 + self.a1 / self.R_foc, 0], [0, 1.0 / (1 + self.a1 / self.R_foc)]]
-        )
+        self.correction_term = sp.Matrix([
+            [1 + self.a1 / self.R_foc, 0],
+            [0, 1.0 / (1 + self.a1 / self.R_foc)],
+        ])
         self.ray_transfer_matrix = (
             self.correction_term
             * uniform_medium(self.d_CCD)
@@ -629,6 +736,21 @@ class Camera:
 
         return system_matrix.evalf(subs={self.R_foc: focus_lens_curvature})
 
+    def get_size_on_ccd(self, size_pixels: float) -> float:
+        """Get the image size on the CCD sensor in meters.
+
+        Parameters
+        ----------
+        size_pixels : float
+            Size of the CCD sensor in pixels.
+
+        Returns
+        -------
+        float
+            Size of the CCD sensor in meters.
+        """
+        return size_pixels / (self.pixel_density * 1000)  # convert mm to m
+
 
 # Maximum allowed difference between the calculated and specified refraction of the eye model
 _MAXIMUM_REFRACTION_DEVIATION = 0.05
@@ -669,7 +791,7 @@ def calculate_magnification(
     Returns
     -------
     magnification : float
-        Central magnification of the eye - camera system.
+        Central magnification of the eye - camera system, in pixels per millimeter.
     glasses_power : float
         Power of the corrective lens required to correct for the eye's refraction, in
         diopters.
@@ -681,7 +803,7 @@ def calculate_magnification(
     When the calculated glasses power differs significantly from
     `eye.spherical_equivalent`, a warning is displayed.
     """
-    glasses_curvature, glasses_power = eye.calculate_refraction(display=False)
+    _, glasses_power = eye.calculate_refraction(display=False)
 
     if (
         not suppress_warnings
@@ -713,7 +835,7 @@ def calculate_magnification(
         subs=({camera.R_foc: focus_lens_radius})
     )
 
-    magnification: float = focused_system_matrix[0, 0]
+    magnification: float = focused_system_matrix[0, 0] * camera.pixel_density
 
     if abs(focused_system_matrix[0, 1]) > _MAXIMUM_FOCUS_DEVIATION:
         warn(f"focused_system_matrix not in focus for patient {eye.name}")
