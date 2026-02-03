@@ -657,10 +657,12 @@ class Camera:
         self.focus_lens = spherical_interface(
             self.n_glas, 1.0, -self.R_foc
         ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix([
-            [1 + self.a1 / self.R_foc, 0],
-            [0, 1.0 / (1 + self.a1 / self.R_foc)],
-        ])
+        self.correction_term = sp.Matrix(
+            [
+                [1 + self.a1 / self.R_foc, 0],
+                [0, 1.0 / (1 + self.a1 / self.R_foc)],
+            ]
+        )
         self.ray_transfer_matrix = (
             self.correction_term
             * uniform_medium(self.d_CCD)
