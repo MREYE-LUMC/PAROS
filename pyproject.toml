@@ -27,7 +27,7 @@ dependencies = [
     "sympy",
     "typing-extensions>=4.12.2 ; python_full_version < '3.11'",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 
 [tool.hatch.envs.default]
