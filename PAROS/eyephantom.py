@@ -80,9 +80,13 @@ class Lens:
         air_refractive_index = 1.0
 
         return (
-            spherical_interface(self.refractive_index, air_refractive_index, self.back_curvature * 1e-3)
+            spherical_interface(
+                self.refractive_index, air_refractive_index, self.back_curvature * 1e-3
+            )
             * uniform_medium(self.center_thickness * 1e-3)
-            * spherical_interface(air_refractive_index, self.refractive_index, self.front_curvature * 1e-3)
+            * spherical_interface(
+                air_refractive_index, self.refractive_index, self.front_curvature * 1e-3
+            )
         )
 
 
@@ -170,7 +174,9 @@ class EyePhantom:
     def __str__(self):
         return f"{self.name}"
 
-    def build_from_dataframe(self, experiment: pd.Series, lens_file: pd.DataFrame) -> None:
+    def build_from_dataframe(
+        self, experiment: pd.Series, lens_file: pd.DataFrame
+    ) -> None:
         """Initializes an `EyePhantom` instance from a pandas DataFrame.
 
         Parameters

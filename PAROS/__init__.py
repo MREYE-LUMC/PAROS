@@ -7,4 +7,3 @@ eye. The full method and validation are described in (article reference to be ad
 from PAROS import data, eyephantom, fundscale
 
 __all__ = ("data", "eyephantom", "fundscale")
-__version__ = "1.0.1"

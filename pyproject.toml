@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "versioningit"]
 build-backend = "hatchling.build"
 
 [project]
@@ -10,25 +10,16 @@ license = { file = "LICENSE" }
 authors = [
     { name = "Lennart J. Pors", email = "l.j.pors@lumc.nl" },
     { name = "Jan-Willem M. Beenakker", email = "j.w.m.beenakker@lumc.nl" },
-    { name = "Corné Haasjes", email = "c.haasjes@lumc.nl" }
+    { name = "Corné Haasjes", email = "c.haasjes@lumc.nl" },
 ]
-keywords = [
-    "paraxial optics",
-    "ophthalmology"
-]
+keywords = ["paraxial optics", "ophthalmology"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3",
     "Typing :: Typed",
     "Topic :: Scientific/Engineering :: Physics",
 ]
-dependencies = [
-    "matplotlib",
-    "numpy",
-    "pandas",
-    "scipy",
-    "sympy",
-]
+dependencies = ["matplotlib", "numpy", "pandas", "scipy", "sympy"]
 requires-python = ">=3.9"
 dynamic = ["version"]
 
@@ -37,9 +28,7 @@ installer = "uv"
 path = ".venv"
 
 [tool.hatch.envs.jupyter]
-dependencies = [
-    "jupyter"
-]
+dependencies = ["jupyter"]
 
 [tool.hatch.envs.jupyter.scripts]
 # Run a single notebook. Run as hatch run jupyter:run-notebook <notebook>
@@ -51,19 +40,20 @@ run-all = [
 ]
 
 [tool.hatch.version]
-path = "PAROS/__init__.py"
+source = "versioningit"
+default-version = "0.0.0+unknown"
+
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "ruff_defaults.toml"
 
 [tool.ruff.lint]
 extend-ignore = [
-    "B028",
-    "EM101",
-    "EM102",
-    "N999",
-    "TCH002",
-    "TRY003",
+    "B028",   # No explicit stacklevel
+    "EM101",  # Raw string in exception
+    "EM102",  # f-string in exception
+    "N999",   # Invalid module name
+    "TRY003", # Long exception messages
 ]
 
 [dependency-groups]
-dev = [
-    "jupyter>=1.1.1",
-]
+dev = ["jupyter>=1.1.1"]
