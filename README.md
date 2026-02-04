@@ -9,6 +9,7 @@ The code is provided as is, without any warranty, under the [MIT license](LICENS
 ## Basic usage
 
 ### Try it online
+
 A basic version of PAROS can most easily be run online here: [basic version](https://demo.mreye.nl/paros)
 
 [![Try PAROS online](.github/assets/screenshot.png)](https://demo.mreye.nl/PAROS)
@@ -33,10 +34,11 @@ The implementation of PAROS in this repository is functional for the camera in o
 ## Camera constants
 
 Please find here a table of known camera calibration constants; this can be added upon by other contributors. 
-| Camera type     | CCD type | Condenser lens power (D) | First order calibration term |
-| --------------- | -------- | ------------------------ | ---------------------------- |
-| Topcon TRC-50DX |          | 37.6                     | 0.03481                      |
-| Topcon TRC-50IX |          | 37.7                     | 0.03226                      |
+
+| Camera type     | CCD type | Condenser lens power [D] | First order calibration term | Pixel density [px/mm] |
+| :-------------- | -------- | -----------------------: | ---------------------------: | --------------------: |
+| Topcon TRC-50DX |          | 37.6                     | 0.03481                      | 100                   |
+| Topcon TRC-50IX |          | 37.7                     | 0.03226                      | 100                   |
 
 ## Referencing
 
