@@ -182,8 +182,9 @@ def calculate_piol_matrix(
 class EyeGeometry(TypedDict, total=True):
     """Eye geometry parameters.
 
-    All values are in meters. PAROS uses an inverted eye model, so for a normal
-    eye the radii of curvature for the cornea and lens front surfaces are negative.
+    All curvatures and distances are specified in meters and the spherical equivalent in diopters.
+    PAROS uses an inverted eye model, so for a normal eye the radii of curvature for the cornea and
+    lens front surfaces are negative.
 
     Attributes
     ----------
@@ -585,7 +586,7 @@ class Eye:
         """Calculate the total magnification of the eye - camera system.
 
         The magnification is calculated in units of pixels per millimeter, i.e. a structure
-        of 1 mm on the retina is depicted `magnification` times larger on the camera sensor.
+        of 1 mm on the retina has a size of `magnification` pixels on the camera sensor.
 
         Parameters
         ----------
@@ -620,7 +621,7 @@ class Camera:
         F_cond: NumberOrSymbol | None = None,  # noqa: N803
         a1: NumberOrSymbol | None = None,
         camera_type: Literal["default"] = "default",
-        pixel_density: int = 100,
+        pixel_density: float = 100,
     ) -> None:
         """Create a new camera model.
 
@@ -632,10 +633,13 @@ class Camera:
             First order calibration term.
         camera_type : Literal["default"]
             Type of camera. Currently only "default" is implemented.
-        pixel_density : int
+        pixel_density : float
             Pixel density of the camera sensor, in pixels per millimeter.
             Defaults to 100 pixels/mm.
         """
+        if pixel_density <= 0:
+            raise ValueError("Pixel density must be a positive float.")
+
         self.camera_type = "lensTaylor"
         self.F_cond = sp.Symbol("F_cond", real=True)
         self.d_CCD = sp.symbols("d_CCD")
@@ -742,17 +746,17 @@ class Camera:
         return system_matrix.evalf(subs={self.R_foc: focus_lens_curvature})
 
     def get_size_on_ccd(self, size_pixels: float) -> float:
-        """Get the image size on the CCD sensor in meters.
+        """Convert an image size in pixels to its physical size on the CCD sensor in meters.
 
         Parameters
         ----------
         size_pixels : float
-            Size of the CCD sensor in pixels.
+            Image size on the CCD sensor in pixels.
 
         Returns
         -------
         float
-            Size of the CCD sensor in meters.
+            Image size on the CCD sensor in meters.
         """
         return size_pixels / (self.pixel_density * 1000)  # convert mm to m
 
@@ -774,7 +778,7 @@ def calculate_magnification(
 ) -> tuple[float, float, Eye]:
     """Calculate the total magnification of the eye - camera system.
 
-    A structure on the central retina is depicted `magnification` times larger
+    A structure of 1 mm  on the central retina has a size of `magnification` pixels
     on the camera sensor.
 
     Parameters
