@@ -25,7 +25,7 @@ from __future__ import annotations
 import copy
 import math
 from sys import version_info
-from typing import Literal, NamedTuple, Union
+from typing import Literal, NamedTuple, Union, cast
 from warnings import warn
 
 import numpy as np
@@ -615,13 +615,16 @@ class Eye:
         return magnification, focused_system_matrix, focus_lens_radius
 
 
+_MISSING = cast(float, object())
+
+
 class Camera:
     def __init__(
         self,
         F_cond: NumberOrSymbol | None = None,  # noqa: N803
         a1: NumberOrSymbol | None = None,
+        pixel_density: float = _MISSING,
         camera_type: Literal["default"] = "default",
-        pixel_density: float = 100,
     ) -> None:
         """Create a new camera model.
 
@@ -637,6 +640,8 @@ class Camera:
             Pixel density of the camera sensor, in pixels per millimeter.
             Defaults to 100 pixels/mm.
         """
+        if pixel_density is _MISSING:
+            raise ValueError("Pixel density must be specified.")
         if pixel_density <= 0:
             raise ValueError("Pixel density must be a positive float.")
 
@@ -674,12 +679,14 @@ class Camera:
             * self.condenser_lens
         )
 
-        self.M_camera_alg = self.ray_transfer_matrix
-
         if F_cond and (a1 is not None):
-            self.ray_transfer_matrix = self.M_camera_alg.evalf(
+            self.ray_transfer_matrix = self.ray_transfer_matrix.evalf(
                 subs={self.F_cond: F_cond, self.a1: a1}
             )
+
+    @property
+    def M_camera_alg(self):
+        return self.ray_transfer_matrix
 
     def calculate_focus_lens_radius(
         self, eye_matrix: sp.Matrix, distance_eye_camera: float = 0.05
@@ -732,7 +739,7 @@ class Camera:
         )
 
         # For contact cameras such as the Panoret fundus camera, the refractive index (of air) needs to be changed to
-        # that of the medium use dbetween the eye and camera. This can be done by changing the use of uniform_medium()
+        # that of the medium used between the eye and camera. This can be done by changing the use of uniform_medium()
         # to medium_change().
         focus_lens_curvature = self.calculate_focus_lens_radius(
             eye_matrix, distance_eye_camera
