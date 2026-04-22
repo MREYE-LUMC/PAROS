@@ -40,6 +40,10 @@ Please find here a table of known camera calibration constants; this can be adde
 | Topcon TRC-50DX |          | 37.6                     | 0.03481                      | 100                   |
 | Topcon TRC-50IX |          | 37.7                     | 0.03226                      | 100                   |
 
+> [!NOTE]
+> The pixel density for the Topcon system is estimated from the scale bar in the fundus images.
+> Since this value is only used to fit the other parameters, it does not need to be exact, but the same value should be used for both calibration and magnification calculation.
+
 ## Referencing
 
 When publishing results obtained with this package, please cite the paper that describes the full method and validation: Pors LJ, Haasjes C, van Vught L, et al. Correction Method for Optical Scaling of Fundoscopy Images: Development, Validation, and First Implementation. Invest Ophthalmol Vis Sci. 2024;65(1):43. [doi:10.1167/iovs.65.1.43](https://iovs.arvojournals.org/article.aspx?articleid=2793314)
