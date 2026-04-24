@@ -48,8 +48,6 @@ __all__ = [
     "calculate_piol_matrix",
 ]
 
-sp.init_printing(use_unicode=True)
-
 NumberOrSymbol = Union[int, float, sp.Symbol]
 EyeModelType = Literal["Navarro", "VughtIOL"]
 
