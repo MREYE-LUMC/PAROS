@@ -41,7 +41,7 @@ Please find here a table of known camera calibration constants; this can be adde
 | Topcon TRC-50IX |          | 37.7                     | 0.03226                      | 100                   |
 
 > [!NOTE]
-> The pixel density for the Topcon system is estimated from the scale bar in the fundus images.
+> The pixel density for the Topcon system is estimated.
 > Since this value is only used to fit the other parameters, it does not need to be exact, but the same value should be used for both calibration and magnification calculation.
 
 ## Referencing
