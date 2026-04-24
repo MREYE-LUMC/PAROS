@@ -359,6 +359,7 @@ class Eye:
         geometry: _PartialEyeGeometry | EyeGeometry | None = None,
         model_type: EyeModelType = "Navarro",
         NType: EyeModelType = "Navarro",  # noqa: N803
+        refractive_indices: _PartialRefractiveIndices | None = None,
         refraction: float | None = None,
         pIOL: PhakicIOL | None = None,  # noqa: N803
     ) -> None:
@@ -387,6 +388,10 @@ class Eye:
         refraction : float
             Spherical equivalent of refraction of the eye model. The lens back curvature
             can be adjusted to obtain this refraction with `Eye.adjust_lens_back`.
+        refractive_indices : _PartialRefractiveIndices | None
+            Dictionary with numerical values of the refractive indices of the eye media.
+            If `None`, the refractive indices are based on `NType`. If specified, the
+            refractive indices corresponding to `NType` are updated with the values in this dictionary.
         pIOL : PhakicIOL
             Properties of the pIOL, if present. Tuple of power, thickness, refractive
             index, distance to lens.
@@ -404,6 +409,9 @@ class Eye:
             self.refractive_indices = _DEFAULT_REFRACTIVE_INDICES[NType].copy()
         else:
             raise ValueError(f"Model type {NType} is undefined.")
+
+        if refractive_indices is not None:
+            self.refractive_indices.update(refractive_indices)
 
         self.R_corF, self.R_corB, self.R_lensF, self.R_lensB = sp.symbols(
             "R_corF R_corB R_lensF R_lensB"
@@ -725,10 +733,12 @@ class Camera:
         self.focus_lens = spherical_interface(
             self.n_glas, 1.0, -self.R_foc
         ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix([
-            [1 + self.a1 / self.R_foc, 0],
-            [0, 1.0 / (1 + self.a1 / self.R_foc)],
-        ])
+        self.correction_term = sp.Matrix(
+            [
+                [1 + self.a1 / self.R_foc, 0],
+                [0, 1.0 / (1 + self.a1 / self.R_foc)],
+            ]
+        )
         self.ray_transfer_matrix = (
             self.correction_term
             * uniform_medium(self.d_CCD)
