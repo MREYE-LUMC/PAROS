@@ -418,7 +418,7 @@ class Eye:
             "D_cor D_ACD D_lens D_vitr"
         )
 
-        self.ray_transfer_matrix = self._update_ray_transfer_matrix()
+        self._update_ray_transfer_matrix()
 
     @property
     def axial_length(self) -> float:
