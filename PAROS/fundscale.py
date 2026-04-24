@@ -32,11 +32,21 @@ import numpy as np
 import sympy as sp
 
 if version_info <= (3, 11):
-    from typing_extensions import NotRequired, TypedDict
+    from typing_extensions import NotRequired, TypedDict, Unpack
 else:
-    from typing import NotRequired, TypedDict
+    from typing import NotRequired, TypedDict, Unpack
 
-sp.init_printing(use_unicode=True)
+
+__all__ = [
+    "Eye",
+    "Camera",
+    "calculate_magnification",
+    "spherical_interface",
+    "uniform_medium",
+    "medium_change",
+    "calculate_piol_curvature",
+    "calculate_piol_matrix",
+]
 
 NumberOrSymbol = Union[int, float, sp.Symbol]
 EyeModelType = Literal["Navarro", "VughtIOL"]
@@ -219,7 +229,7 @@ class EyeGeometry(TypedDict, total=True):
     SE: NotRequired[float]
 
 
-class PartialEyeGeometry(EyeGeometry, total=False):
+class _PartialEyeGeometry(EyeGeometry, total=False):
     """Eye geometry parameters.
 
     This class can be used to define a partial eye geometry, in which only a subset
@@ -282,7 +292,24 @@ class RefractiveIndices(TypedDict):
     vit: float
 
 
-DEFAULT_GEOMETRIES: dict[EyeModelType, EyeGeometry] = {
+class _PartialRefractiveIndices(RefractiveIndices, total=False):
+    """Refractive indices of the eye media.
+
+    This class can be used to define a partial set of refractive indices, in which only a
+    subset of the indices are specified.
+
+    See Also
+    --------
+    RefractiveIndices : Full set of refractive indices.
+    """
+
+    cor: float
+    aq: float
+    lens: float
+    vit: float
+
+
+_DEFAULT_GEOMETRIES: dict[EyeModelType, EyeGeometry] = {
     "Navarro": EyeGeometry(
         R_corF=-7.72e-3,
         R_corB=-6.50e-3,
@@ -305,7 +332,7 @@ DEFAULT_GEOMETRIES: dict[EyeModelType, EyeGeometry] = {
     ),
 }
 
-DEFAULT_REFRACTIVE_INDICES: dict[EyeModelType, RefractiveIndices] = {
+_DEFAULT_REFRACTIVE_INDICES: dict[EyeModelType, RefractiveIndices] = {
     "Navarro": RefractiveIndices(
         cor=1.3777,
         aq=1.3391,
@@ -327,9 +354,10 @@ class Eye:
     def __init__(
         self,
         name: str = "testEye",
-        geometry: PartialEyeGeometry | EyeGeometry | None = None,
+        geometry: _PartialEyeGeometry | EyeGeometry | None = None,
         model_type: EyeModelType = "Navarro",
         NType: EyeModelType = "Navarro",  # noqa: N803
+        refractive_indices: _PartialRefractiveIndices | None = None,
         refraction: float | None = None,
         pIOL: PhakicIOL | None = None,  # noqa: N803
     ) -> None:
@@ -345,7 +373,7 @@ class Eye:
         ----------
         name : str
             Name of the eye model.
-        geometry : PartialEyeGeometry | None
+        geometry : _PartialEyeGeometry | None
             Dictionary with numerical geometric parameters of the eye. If `None`, the
             geometry is based on `model_type`. Can be a partial dictionary, in which
             case missing values are based on the eye model specified by `model_type`.
@@ -358,6 +386,10 @@ class Eye:
         refraction : float
             Spherical equivalent of refraction of the eye model. The lens back curvature
             can be adjusted to obtain this refraction with `Eye.adjust_lens_back`.
+        refractive_indices : _PartialRefractiveIndices | None
+            Dictionary with numerical values of the refractive indices of the eye media.
+            If `None`, the refractive indices are based on `NType`. If specified, the
+            refractive indices corresponding to `NType` are updated with the values in this dictionary.
         pIOL : PhakicIOL
             Properties of the pIOL, if present. Tuple of power, thickness, refractive
             index, distance to lens.
@@ -365,17 +397,19 @@ class Eye:
         self.name = name
         self.spherical_equivalent = refraction
         self.is_pseudophakic = model_type == "VughtIOL"
-        self.axial_length = None
         self.pIOL = pIOL
 
         self.geometry = self._build_geometry_dictionary(model_type, geometry)
 
         self.refractive_indices: RefractiveIndices
 
-        if NType in DEFAULT_REFRACTIVE_INDICES:
-            self.refractive_indices = DEFAULT_REFRACTIVE_INDICES[NType].copy()
+        if NType in _DEFAULT_REFRACTIVE_INDICES:
+            self.refractive_indices = _DEFAULT_REFRACTIVE_INDICES[NType].copy()
         else:
             raise ValueError(f"Model type {NType} is undefined.")
+
+        if refractive_indices is not None:
+            self.refractive_indices.update(refractive_indices)
 
         self.R_corF, self.R_corB, self.R_lensF, self.R_lensB = sp.symbols(
             "R_corF R_corB R_lensF R_lensB"
@@ -384,13 +418,16 @@ class Eye:
             "D_cor D_ACD D_lens D_vitr"
         )
 
-        self.axial_length = (
+        self._update_ray_transfer_matrix()
+
+    @property
+    def axial_length(self) -> float:
+        return (
             self.geometry["D_cor"]
             + self.geometry["D_ACD"]
             + self.geometry["D_lens"]
             + self.geometry["D_vitr"]
         )
-        self.ray_transfer_matrix = self.calculate_ray_transfer_matrix()
 
     def __str__(self) -> str:
         return f"{self.name}"
@@ -398,12 +435,12 @@ class Eye:
     @staticmethod
     def _build_geometry_dictionary(
         model_type: EyeModelType,
-        partial_geometry: PartialEyeGeometry | EyeGeometry | None = None,
+        partial_geometry: _PartialEyeGeometry | EyeGeometry | None = None,
     ) -> EyeGeometry:
-        if model_type not in DEFAULT_GEOMETRIES:
+        if model_type not in _DEFAULT_GEOMETRIES:
             raise ValueError(f"Model type {model_type} is undefined.")
 
-        geometry = DEFAULT_GEOMETRIES[model_type].copy()
+        geometry = _DEFAULT_GEOMETRIES[model_type].copy()
 
         if partial_geometry is not None:
             # Estimate the cornea back curvature if it is unspecified and the cornea
@@ -471,6 +508,34 @@ class Eye:
             * lens
             * uniform_medium(self.D_vitr)
         )
+
+    def update_geometry(self, **geometry: Unpack[_PartialEyeGeometry]) -> None:
+        """Update the eye geometry with new values.
+
+        Parameters
+        ----------
+        geometry : _PartialEyeGeometry
+            Geometry parameters to update as keyword arguments.
+        """
+        self.geometry.update(geometry)
+        self._update_ray_transfer_matrix()
+
+    def update_refractive_indices(
+        self, **refractive_indices: Unpack[_PartialRefractiveIndices]
+    ) -> None:
+        """Update the eye's refractive indices with new values.
+
+        Parameters
+        ----------
+        refractive_indices : _PartialRefractiveIndices
+            Refractive indices to update as keyword arguments.
+        """
+        self.refractive_indices.update(refractive_indices)
+        self._update_ray_transfer_matrix()
+
+    def _update_ray_transfer_matrix(self) -> None:
+        """Update the eye's ray transfer matrix."""
+        self.ray_transfer_matrix = self.calculate_ray_transfer_matrix()
 
     def adjust_lens_back(
         self, target_refraction: float, *, update_model: bool = False
