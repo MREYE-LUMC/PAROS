@@ -373,7 +373,7 @@ class Eye:
         ----------
         name : str
             Name of the eye model.
-        geometry : PartialEyeGeometry | None
+        geometry : _PartialEyeGeometry | None
             Dictionary with numerical geometric parameters of the eye. If `None`, the
             geometry is based on `model_type`. Can be a partial dictionary, in which
             case missing values are based on the eye model specified by `model_type`.
@@ -514,13 +514,13 @@ class Eye:
 
         Parameters
         ----------
-        geometry : PartialEyeGeometry
+        geometry : _PartialEyeGeometry
             Geometry parameters to update as keyword arguments.
         """
         self.geometry.update(geometry)
         self._update_ray_transfer_matrix()
 
-    def update_materials(
+    def update_refractive_indices(
         self, **refractive_indices: Unpack[_PartialRefractiveIndices]
     ) -> None:
         """Update the eye's refractive indices with new values.
