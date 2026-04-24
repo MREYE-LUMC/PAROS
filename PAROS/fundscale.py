@@ -25,16 +25,16 @@ from __future__ import annotations
 import copy
 import math
 from sys import version_info
-from typing import Literal, NamedTuple, Union, Unpack, cast
+from typing import Literal, NamedTuple, Union, cast
 from warnings import warn
 
 import numpy as np
 import sympy as sp
 
 if version_info <= (3, 11):
-    from typing_extensions import NotRequired, TypedDict
+    from typing_extensions import NotRequired, TypedDict, Unpack
 else:
-    from typing import NotRequired, TypedDict
+    from typing import NotRequired, TypedDict, Unpack
 
 
 __all__ = [
