@@ -15,8 +15,6 @@ import sympy as sp
 
 from PAROS.fundscale import spherical_interface, uniform_medium
 
-sp.init_printing(use_unicode=True)
-
 
 class Lens:
     """Ray transfer model of a lens."""
