@@ -8,12 +8,13 @@ This module can be used in conjunction with `PAROS.fundscale` to calculate the c
 
 from __future__ import annotations
 
-from typing import Literal
-
-import pandas as pd
-import sympy as sp
+from typing import TYPE_CHECKING, Literal
 
 from PAROS.fundscale import spherical_interface, uniform_medium
+
+if TYPE_CHECKING:
+    import pandas as pd
+    import sympy as sp
 
 
 class Lens:

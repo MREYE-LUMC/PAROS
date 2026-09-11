@@ -24,31 +24,33 @@ from __future__ import annotations
 
 import copy
 import math
+from abc import ABC, abstractmethod
 from sys import version_info
-from typing import Literal, NamedTuple, Union, cast
+from typing import Literal, NamedTuple, cast
 from warnings import warn
 
 import numpy as np
 import sympy as sp
 
-if version_info <= (3, 11):
-    from typing_extensions import NotRequired, TypedDict, Unpack
-else:
+if version_info >= (3, 12):
     from typing import NotRequired, TypedDict, Unpack
+else:
+    from typing_extensions import NotRequired, TypedDict, Unpack
 
 
 __all__ = [
-    "Eye",
     "Camera",
-    "calculate_magnification",
-    "spherical_interface",
-    "uniform_medium",
-    "medium_change",
+    "Eye",
+    "FocusDependentCamera",
+    "TelecentricCamera",
     "calculate_piol_curvature",
     "calculate_piol_matrix",
+    "medium_change",
+    "spherical_interface",
+    "uniform_medium",
 ]
 
-NumberOrSymbol = Union[int, float, sp.Symbol]
+NumberOrSymbol = int | float | sp.Symbol
 EyeModelType = Literal["Navarro", "VughtIOL"]
 
 
@@ -141,9 +143,9 @@ def calculate_piol_curvature(
     """
     n_medium = 1.336
 
-    A = -thickness / n_iol  # noqa: N806
-    B = 2  # noqa: N806
-    C = -piol_power  # noqa: N806
+    A = -thickness / n_iol
+    B = 2
+    C = -piol_power
 
     front_power = (-B + math.sqrt(B * B - 4 * A * C)) / (2 * A)
 
@@ -356,10 +358,10 @@ class Eye:
         name: str = "testEye",
         geometry: _PartialEyeGeometry | EyeGeometry | None = None,
         model_type: EyeModelType = "Navarro",
-        NType: EyeModelType = "Navarro",  # noqa: N803
+        NType: EyeModelType = "Navarro",
         refractive_indices: _PartialRefractiveIndices | None = None,
         refraction: float | None = None,
-        pIOL: PhakicIOL | None = None,  # noqa: N803
+        pIOL: PhakicIOL | None = None,
     ) -> None:
         """Initialize an eye model.
 
@@ -453,17 +455,8 @@ class Eye:
 
         return geometry
 
-    def calculate_ray_transfer_matrix(self) -> sp.Matrix:
-        """Calculate the eye's ray transfer matrix.
-
-        Returns
-        -------
-        sp.Matrix
-            Ray transfer matrix of the eye.
-        """
-
-        # Cornea
-        cornea = (
+    def _matrix_cornea(self) -> sp.Matrix:
+        return (
             spherical_interface(self.refractive_indices["cor"], 1.0, self.R_corF)
             * uniform_medium(self.D_cor)
             * spherical_interface(
@@ -473,8 +466,8 @@ class Eye:
             )
         )
 
-        # Lens
-        lens = (
+    def _matrix_lens(self) -> sp.Matrix:
+        return (
             spherical_interface(
                 self.refractive_indices["lens"],
                 self.refractive_indices["aq"],
@@ -488,6 +481,22 @@ class Eye:
             )
         )
 
+    def _matrix_anterior_segment(self) -> sp.Matrix:
+        """Compute the ray transfer matrix for the anterior segment of the eye (cornea to pupil)."""
+        return self._matrix_cornea() * uniform_medium(self.D_ACD)
+
+    def _matrix_posterior_segment(self) -> sp.Matrix:
+        """Compute the ray transfer matrix for the posterior segment of the eye (pupil to retina)."""
+        return self._matrix_lens() * uniform_medium(self.D_vitr)
+
+    def calculate_ray_transfer_matrix(self) -> sp.Matrix:
+        """Calculate the eye's ray transfer matrix.
+
+        Returns
+        -------
+        sp.Matrix
+            Ray transfer matrix of the eye.
+        """
         # pIOL
         if self.pIOL:  # (Diol,tiol,Niol,d_iollens)
             phakic_iol = calculate_piol_matrix(
@@ -502,12 +511,39 @@ class Eye:
 
         # Retina to cornea
         return (
-            cornea
-            * uniform_medium(self.D_ACD)
+            self._matrix_anterior_segment()
             * phakic_iol
-            * lens
-            * uniform_medium(self.D_vitr)
+            * self._matrix_posterior_segment()
         )
+
+    def entrance_pupil_position(self) -> float:
+        """Compute the position of the entrance pupil relative to the cornea.
+
+        Note: since this is a reversed eye, the calculation is similar to the exit pupil position,
+        but using the anterior segment matrix instead of the posterior segment matrix.
+
+        The entrance pupil is calculated from the anterior ray transfer matrix as L = -B / D.
+        """
+        m_anterior = self._matrix_anterior_segment().evalf(subs=self.geometry)
+
+        return float(-m_anterior[0, 1] / m_anterior[1, 1])
+
+    def nodal_points(self) -> tuple[float, float]:
+        """Compute the positions of the nodal points relative to the cornea.
+
+        The nodal points are calculated from the ray transfer matrix as:
+        N1 = (A - n_vit) / C
+        N2 = AL - (D - 1) / C
+
+        where A, C, D are elements of the ray transfer matrix, n_vit is the refractive index of the vitreous,
+        and AL is the axial length.
+        """
+        matrix = self.evaluate_matrix()
+
+        n1 = float(matrix[0, 0]) - self.refractive_indices["vit"] / float(matrix[1, 0])
+        n2 = self.axial_length - float(matrix[1, 1] - 1) / float(matrix[1, 0])
+
+        return n1, n2
 
     def update_geometry(self, **geometry: Unpack[_PartialEyeGeometry]) -> None:
         """Update the eye geometry with new values.
@@ -591,49 +627,28 @@ class Eye:
 
         return lens_back_curvature, r_glasses
 
-    def calculate_refraction(self, *, display=True) -> tuple[float, float]:
+    def calculate_refraction(self) -> float:
         """Calculate the refraction of the eye.
 
-        A corrective lens (glasses) for an eye with `target_refraction` is place in
-        front of the eye. Its radius of curvature is then solved for a focused image on
-        the retina. A vertex distance of 1.4 cm between the glasses and the eye is
-        assumed.
-
-        Parameters
-        ----------
-        display : bool
-            If `True`, the results are printed.
+        The refraction is calculated as the vergence of a central retinal object at a vertex distance
+        of 1.4 cm in front of the cornea. This is equivalent to the power of a corrective thin lens
+        placed 1.4 cm in front of the cornea that focuses light on the retina.
 
         Returns
         -------
-        glasses_curvature : float
-            Radius of curvature of the corrective lens, in meters.
-        glasses_power : float
-            Power of the corrective lens, in diopters.
-
-        Warnings
-        --------
-        When multiple solutions for the curvature are found, a warning is displayed.
+        float
+            The power of the corrective lens, in diopters.
         """
-        n_glasses = 1.5
-        R = sp.symbols("R")  # noqa: N806
-        glasses = spherical_interface(n_glasses, 1, -R * 10**-3) * spherical_interface(
-            1, n_glasses, R * 10**-3
-        )
-        eye = self.evaluate_matrix()
+        matrix = self.evaluate_matrix()
 
-        glasses_curvature_solutions = sp.solveset(
-            (glasses * uniform_medium(0.014) * eye)[1, 1], R
-        )
-        if len(list(glasses_curvature_solutions)) != 1:
-            warn(f"Multiple solutions found: {glasses_curvature_solutions}")
+        B = float(matrix[0, 1])
+        D = float(matrix[1, 1])
 
-        glasses_curvature = next(iter(glasses_curvature_solutions)) * 1e-3
-        glasses_power = 2.0 * (n_glasses - 1.0) / (glasses_curvature)
-        if display:
-            print(f"{glasses_curvature=:.2f} m, {glasses_power=:.2f} D")  # noqa: T201
+        # Calculate vergence at cornea
+        vergence = D / B
 
-        return glasses_curvature, glasses_power
+        # Calculate refraction 1.4 cm in front of the cornea (vertex distance)
+        return vergence / (1 + 0.014 * vergence)
 
     def evaluate_matrix(self) -> sp.Matrix:
         """Evaluate the eye's ray transfer matrix using its geometrical parameters.
@@ -645,48 +660,35 @@ class Eye:
         """
         return self.ray_transfer_matrix.evalf(subs=self.geometry)
 
-    def calculate_camera_magnification(
-        self, camera: Camera, distance_eye_camera: float = 0.05
-    ) -> tuple[float, sp.Matrix, float]:
-        """Calculate the total magnification of the eye - camera system.
 
-        The magnification is calculated in units of pixels per millimeter, i.e. a structure
-        of 1 mm on the retina has a size of `magnification` pixels on the camera sensor.
+class BaseCamera(ABC):
+    @abstractmethod
+    def calculate_magnification(self, eye: Eye, *args, **kwargs) -> float:
+        """Calculate the magnification of the eye-camera system.
 
         Parameters
         ----------
-        camera : Camera
-            Camera model.
-        distance_eye_camera : float
-            Distance between eye and camera in meters, measured from the cornea front to
-            the camera lens front.
+        eye : Eye
+            Eye model.
+        *args : tuple
+            Additional camera-specific positional arguments.
+        **kwargs : dict
+            Additional camera-specific keyword arguments.
 
         Returns
         -------
-        magnification : float
-            Central magnification of the eye - camera system, in pixels per millimeter.
-        focused_system_matrix : sympy.Matrix
-            Ray transfer matrix for the full system.
-        focus_lens_radius : float
-            Radius of curvature of the camera's focal length, in meters.
+        float
+            Magnification of the eye-camera system, in pixels per millimeter.
         """
-        eye_matrix = self.evaluate_matrix()
-        focused_system_matrix, focus_lens_radius = camera.focused_system_matrix(
-            eye_matrix, distance_eye_camera, return_focus_lens_curvature=True
-        )
-
-        magnification = focused_system_matrix[0, 0] * camera.pixel_density
-
-        return magnification, focused_system_matrix, focus_lens_radius
 
 
-_MISSING = cast(float, object())
+_MISSING = cast("float", object())
 
 
-class Camera:
+class Camera(BaseCamera):
     def __init__(
         self,
-        F_cond: NumberOrSymbol | None = None,  # noqa: N803
+        F_cond: NumberOrSymbol | None = None,
         a1: NumberOrSymbol | None = None,
         pixel_density: float = _MISSING,
         camera_type: Literal["default"] = "default",
@@ -731,12 +733,10 @@ class Camera:
         self.focus_lens = spherical_interface(
             self.n_glas, 1.0, -self.R_foc
         ) * spherical_interface(1.0, self.n_glas, self.R_foc)
-        self.correction_term = sp.Matrix(
-            [
-                [1 + self.a1 / self.R_foc, 0],
-                [0, 1.0 / (1 + self.a1 / self.R_foc)],
-            ]
-        )
+        self.correction_term = sp.Matrix([
+            [1 + self.a1 / self.R_foc, 0],
+            [0, 1.0 / (1 + self.a1 / self.R_foc)],
+        ])
         self.ray_transfer_matrix = (
             self.correction_term
             * uniform_medium(self.d_CCD)
@@ -778,12 +778,12 @@ class Camera:
             self.ray_transfer_matrix * uniform_medium(distance_eye_camera) * eye_matrix
         )
 
-        # Ror contact cameras such as the Panoret fundus camera, the refractive index (of air) needs to be changed to
+        # For contact cameras such as the Panoret fundus camera, the refractive index (of air) needs to be changed to
         # that of the medium used between the eye and camera. This can be done by changing the use of uniform_medium()
         # to medium_change().
         # The camera should correct for the patients refraction, so the image should be
         # focused, i.e. B = 0
-        B = system_matrix[0, 1] + 0.0000000001  # noqa: N806
+        B = system_matrix[0, 1] + 0.0000000001
 
         if self.a1 in B.free_symbols:
             possible_curvatures = list(sp.solve(B.evalf(subs={self.a1: 0}), self.R_foc))
@@ -832,93 +832,201 @@ class Camera:
         """
         return size_pixels / (self.pixel_density * 1000)  # convert mm to m
 
+    # Maximum allowed difference between the calculated and specified refraction of the eye model
+    _MAXIMUM_REFRACTION_DEVIATION = 0.05
 
-# Maximum allowed difference between the calculated and specified refraction of the eye model
-_MAXIMUM_REFRACTION_DEVIATION = 0.05
+    # Maximum allowed value of the B-element in a ray transfer matrix for a focused system
+    _MAXIMUM_FOCUS_DEVIATION = 0.0001
 
-# Maximum allowed value of the B-element in a ray transfer matrix for a focused system
-_MAXIMUM_FOCUS_DEVIATION = 0.0001
+    def calculate_magnification(
+        self,
+        eye: Eye,
+        distance_eye_camera: float = 0.05,
+        focus_lens_radius: float | None = None,
+        *,
+        suppress_warnings: bool = False,
+    ) -> float:
+        """Calculate the total magnification of the eye - camera system.
 
+        A structure of 1 mm  on the central retina has a size of `magnification` pixels
+        on the camera sensor.
 
-def calculate_magnification(
-    eye: Eye,
-    camera: Camera,
-    distance_eye_camera: float = 0.05,
-    focus_lens_radius: float | None = None,
-    *,
-    suppress_warnings: bool = False,
-) -> tuple[float, float, Eye]:
-    """Calculate the total magnification of the eye - camera system.
+        Parameters
+        ----------
+        eye : Eye
+            Eye model.
+        distance_eye_camera : float
+            Distance between eye and camera in meters, measured from the cornea front to
+            the camera lens front.
+        focus_lens_radius : float
+            Optional radius of curvature of the focus lens. If not specified, the focus lens
+            curvature is determined using `Camera.calculate_focus_lens_radius`.
+        suppress_warnings : bool
+            If `True`, no warning is issued if the calculated glasses power differs
+            significantly from `eye.spherical_equivalent`.
 
-    A structure of 1 mm  on the central retina has a size of `magnification` pixels
-    on the camera sensor.
+        Returns
+        -------
+        magnification : float
+            Central magnification of the eye - camera system, in pixels per millimeter.
 
-    Parameters
-    ----------
-    eye : Eye
-        Eye model.
-    camera : Camera
-        Camera model.
-    distance_eye_camera : float
-        Distance between eye and camera in meters, measured from the cornea front to
-        the camera lens front.
-    focus_lens_radius : float
-        Optional radius of curvature of the focus lens. If not specified, the focus lens
-        curvature is determined using `Camera.calculate_focus_lens_radius`.
-    suppress_warnings : bool
-        If `True`, no warning is issued if the calculated glasses power differs
-        significantly from `eye.spherical_equivalent`.
+        Warns
+        --------
+        If the calculated glasses power differs significantly from the clinical refraction of the eye model.
+        """
+        glasses_power = eye.calculate_refraction()
 
-    Returns
-    -------
-    magnification : float
-        Central magnification of the eye - camera system, in pixels per millimeter.
-    glasses_power : float
-        Power of the corrective lens required to correct for the eye's refraction, in
-        diopters.
-    eye_model : Eye
-        Eye model used to calculate the magnification.
+        if (
+            eye.spherical_equivalent is not None
+            and not suppress_warnings
+            and abs(glasses_power - eye.spherical_equivalent)
+            > self._MAXIMUM_REFRACTION_DEVIATION
+        ):
+            warn(
+                f"model refraction {glasses_power:.2f} not matching clinical refraction"
+                f" {eye.spherical_equivalent:.2f} for {eye.name}"
+            )
 
-    Warnings
-    --------
-    When the calculated glasses power differs significantly from
-    `eye.spherical_equivalent`, a warning is displayed.
-    """
-    _, glasses_power = eye.calculate_refraction(display=False)
-
-    if (
-        not suppress_warnings
-        and abs(glasses_power - eye.spherical_equivalent)
-        > _MAXIMUM_REFRACTION_DEVIATION
-    ):
-        warn(
-            f"model refraction {glasses_power:.2f} not matching clinical refraction"
-            f" {eye.spherical_equivalent:.2f} for {eye.name}"
+        # For contact cameras such as the Panoret fundus camera, this refractive index (of air) needs to be changed to that
+        # of the medium between the eye and camera. This can be done by changing the use of uniform_medium() to
+        # medium_change().
+        system_matrix = (
+            self.ray_transfer_matrix
+            * uniform_medium(distance_eye_camera)
+            * eye.evaluate_matrix()
         )
 
-    # For contact cameras such as the Panoret fundus camera, this refractive index (of air) needs to be changed to that
-    # of the medium between the eye and camera. This can be done by changing the use of uniform_medium() to
-    # medium_change().
-    system_matrix = (
-        camera.ray_transfer_matrix
-        * uniform_medium(distance_eye_camera)
-        * eye.evaluate_matrix()
-    )
+        if focus_lens_radius is None:
+            # system is in focus so B=0
+            solutions = list(sp.solve(system_matrix[0, 1] + 0.00001, self.R_foc))
+            focus_lens_radius = solutions[
+                np.argmax(np.abs(np.array(solutions) + self.a1_value))
+            ]
 
-    if focus_lens_radius is None:
-        # system is in focus so B=0
-        solutions = list(sp.solve(system_matrix[0, 1] + 0.00001, camera.R_foc))
-        focus_lens_radius = solutions[
-            np.argmax(np.abs(np.array(solutions) + camera.a1_value))
-        ]
+        focused_system_matrix = system_matrix.evalf(
+            subs=({self.R_foc: focus_lens_radius})
+        )
 
-    focused_system_matrix = system_matrix.evalf(
-        subs=({camera.R_foc: focus_lens_radius})
-    )
+        magnification: float = focused_system_matrix[0, 0] * self.pixel_density
 
-    magnification: float = focused_system_matrix[0, 0] * camera.pixel_density
+        if abs(focused_system_matrix[0, 1]) > self._MAXIMUM_FOCUS_DEVIATION:
+            warn(f"focused_system_matrix not in focus for patient {eye.name}")
 
-    if abs(focused_system_matrix[0, 1]) > _MAXIMUM_FOCUS_DEVIATION:
-        warn(f"focused_system_matrix not in focus for patient {eye.name}")
+        return float(magnification)
 
-    return magnification, glasses_power, eye
+
+class TelecentricCamera(BaseCamera):
+    def __init__(self, k: float) -> None:
+        """Create a new telecentric camera model.
+
+        The telecentric camera is characterized by a constant `k`, which is the ratio between
+        the image size on the camera sensor and ray angles.
+
+        Parameters
+        ----------
+        k : float
+            Angle scaling factor of the camera, in pixels per radian.
+
+        Raises
+        ------
+        ValueError
+            If `k` is not positive.
+        """
+        if k <= 0:
+            raise ValueError("Magnification factor k must be positive.")
+
+        self.k = k
+
+    def calculate_magnification(self, eye: Eye) -> float:
+        """Calculate the magnification of the telecentric camera system for a given eye.
+
+        The magnification is calculated in units of pixels per millimeter, i.e. a structure of 1 mm
+        on the retina has a size of `magnification` pixels on the camera sensor.
+
+        Parameters
+        ----------
+        eye : Eye
+            Eye model.
+
+        Returns
+        -------
+        float
+            Magnification of the eye-camera system, in pixels per millimeter.
+        """
+        eye_matrix = eye.evaluate_matrix()
+
+        B = eye_matrix[0, 1]
+        D = eye_matrix[1, 1]
+
+        numerator = self.k * eye.refractive_indices["vit"]
+        denominator = 1e3 * (B + eye.entrance_pupil_position() * D)
+
+        return numerator / denominator
+
+
+class FocusDependentCamera(BaseCamera):
+    def __init__(self, k0: float, alpha: float) -> None:
+        """Create a new focus-dependent camera model.
+
+        The focus-dependent camera is characterized by a constant `k0`, which is the ratio between
+        the image size on the camera sensor and ray angles for emmetropic eyes, and a slope `alpha`
+        that describes how the magnification changes with the eye's refraction.
+
+        Parameters
+        ----------
+        k0 : float
+            Angle scaling factor of the camera for emmetropic eyes, in pixels per radian.
+        alpha : float
+            Slope describing how the magnification changes with the eye's refraction, in pixels per radian per diopter.
+
+        Raises
+        ------
+        ValueError
+            If `k0` is not positive.
+        """
+        if k0 <= 0:
+            raise ValueError("Magnification factor k0 must be positive.")
+
+        self.k0 = k0
+        self.alpha = alpha
+
+    def k(self, refraction: float) -> float:
+        """Calculate the angle scaling factor k for a given eye refraction.
+
+        Parameters
+        ----------
+        refraction : float
+            Spherical equivalent of refraction of the eye model, in diopters.
+
+        Returns
+        -------
+        float
+            Angle scaling factor k for the given eye refraction, in pixels per radian.
+        """
+        return self.k0 + self.alpha * refraction
+
+    def calculate_magnification(self, eye: Eye) -> float:
+        """Calculate the magnification of the focus-dependent camera system for a given eye.
+
+        The magnification is calculated in units of pixels per millimeter, i.e. a structure of 1 mm
+        on the retina has a size of `magnification` pixels on the camera sensor.
+
+        Parameters
+        ----------
+        eye : Eye
+            Eye model.
+
+        Returns
+        -------
+        float
+            Magnification of the eye-camera system, in pixels per millimeter.
+        """
+        eye_matrix = eye.evaluate_matrix()
+
+        B = eye_matrix[0, 1]
+        D = eye_matrix[1, 1]
+
+        numerator = self.k(eye.calculate_refraction()) * eye.refractive_indices["vit"]
+        denominator = 1e3 * (B + eye.entrance_pupil_position() * D)
+
+        return numerator / denominator

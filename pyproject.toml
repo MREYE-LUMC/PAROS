@@ -25,7 +25,7 @@ dependencies = [
     "pandas",
     "scipy",
     "sympy",
-    "typing-extensions>=4.12.2 ; python_full_version < '3.11'",
+    "typing-extensions>=4.12.2 ; python_full_version < '3.12'",
 ]
 requires-python = ">=3.10"
 dynamic = ["version"]
@@ -33,6 +33,9 @@ dynamic = ["version"]
 [tool.hatch.envs.default]
 installer = "uv"
 path = ".venv"
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.jupyter]
 dependencies = ["jupyter"]
@@ -50,8 +53,16 @@ run-all = [
 source = "versioningit"
 default-version = "0.0.0+unknown"
 
-[tool.hatch.envs.hatch-static-analysis]
+[tool.hatch.envs.hatch-check-code]
 config-path = "ruff_defaults.toml"
+dependencies = ["ruff==0.16.5"]
+
+[tool.hatch.envs.hatch-check-fmt]
+config-path = "ruff_defaults.toml"
+dependencies = ["ruff==0.16.5"]
+
+[tool.ruff]
+preview = true
 
 [tool.ruff.lint]
 extend-ignore = [
@@ -62,5 +73,9 @@ extend-ignore = [
     "TRY003", # Long exception messages
 ]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["N806", "PLR2004", "S101"]
+"examples/**" = ["T201", "TC002", "TC003"]
+
 [dependency-groups]
-dev = ["jupyter>=1.1.1"]
+dev = ["jupyter>=1.1.1", "pytest>=9.1.1"]
