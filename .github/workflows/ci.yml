@@ -26,8 +26,22 @@ jobs:
         id: setup-uv
         uses: astral-sh/setup-uv@v10.0.1
       - name: Format and lint
-        run: uvx hatch fmt --check
+        run: uvx hatch check
 
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: *python-versions
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up uv
+        id: setup-uv
+        uses: astral-sh/setup-uv@v10.0.1
+      - name: Run tests
+        run: uvx --python ${{ matrix.python }} hatch test
+    
   jupyter:
     name: Test Jupyter notebooks
     runs-on: ubuntu-latest
