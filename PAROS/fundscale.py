@@ -41,6 +41,8 @@ else:
 __all__ = [
     "Camera",
     "Eye",
+    "FocusDependentCamera",
+    "TelecentricCamera",
     "calculate_piol_curvature",
     "calculate_piol_matrix",
     "medium_change",

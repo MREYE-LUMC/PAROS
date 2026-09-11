@@ -20,7 +20,7 @@ def test_navarro_magnification(navarro_eye, topcon_camera):
     assert pytest.approx(magnification, rel=1e-3) == -161.343
 
 
-def test_calculate_refaction(navarro_eye):
+def test_calculate_refraction(navarro_eye):
     refraction = navarro_eye.calculate_refraction()
 
     matrix = navarro_eye.evaluate_matrix()
