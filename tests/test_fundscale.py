@@ -20,17 +20,28 @@ def test_navarro_magnification(navarro_eye, topcon_camera):
     assert pytest.approx(magnification, rel=1e-3) == -161.343
 
 
-def test_calculate_refraction(navarro_eye):
-    refraction = navarro_eye.calculate_refraction()
+@pytest.mark.parametrize(
+    "geometry, expected_refraction",
+    [
+        ({}, 0.000),
+        ({"R_corB": -6.25e-3, "R_lensB": 5.555e-3, "D_vitr": 18.3203e-3}, -6.0001),
+        ({"R_corB": -6.25e-3, "R_lensB": 6.283e-3, "D_vitr": 14.3203e-3}, 6.0003),
+    ],
+)
+def test_calculate_refraction(
+    geometry: fundscale._PartialEyeGeometry, expected_refraction: float
+):
+    eye = fundscale.Eye(geometry=geometry)
+    refraction = eye.calculate_refraction()
 
-    matrix = navarro_eye.evaluate_matrix()
+    matrix = eye.evaluate_matrix()
     P = sp.symbols("P")
     lens = sp.Matrix([[1, 0], [-P, 1]])
     vertex = sp.Matrix([[1, 0.014], [0, 1]])
     system_matrix = lens * vertex * matrix
 
-    solutions = sp.solveset(system_matrix[1, 1], P)
+    solutions = sp.solve(system_matrix[1, 1], P)
     glasses_power = next(iter(solutions))
 
-    assert pytest.approx(refraction, abs=1e-4) == -0.000
+    assert pytest.approx(refraction, abs=1e-4) == expected_refraction
     assert pytest.approx(glasses_power, abs=1e-4) == refraction
