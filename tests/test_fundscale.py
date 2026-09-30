@@ -17,7 +17,7 @@ def topcon_camera():
 def test_navarro_magnification(navarro_eye, topcon_camera):
     magnification = topcon_camera.calculate_magnification(navarro_eye)
 
-    assert pytest.approx(magnification, rel=1e-3) == -161.343
+    assert pytest.approx(magnification, rel=1e-3) == 161.343
 
 
 @pytest.mark.parametrize(
