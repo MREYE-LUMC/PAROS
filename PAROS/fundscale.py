@@ -922,6 +922,8 @@ class TelecentricCamera(BaseCamera):
         The telecentric camera is characterized by a constant `k`, which is the ratio between
         the image size on the camera sensor and ray angles.
 
+        The magnification for this camera is derived in `docs/telecentric-camera.md`.
+
         Parameters
         ----------
         k : float
