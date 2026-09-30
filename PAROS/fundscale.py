@@ -912,7 +912,7 @@ class Camera(BaseCamera):
         if abs(focused_system_matrix[0, 1]) > self._MAXIMUM_FOCUS_DEVIATION:
             warn(f"focused_system_matrix not in focus for patient {eye.name}")
 
-        return float(magnification)
+        return abs(float(magnification))
 
 
 class TelecentricCamera(BaseCamera):
