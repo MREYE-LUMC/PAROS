@@ -2,7 +2,7 @@
 
 ## Definitions
 
-$M = \begin{bmatrix} A & B \\ C & D \end{bmatrix}$ is the ray transfer matrix of the eye model.
+$`M = \begin{bmatrix} A & B \\ C & D \end{bmatrix}`$ is the ray transfer matrix of the eye model.
 Since the object space is vitreous and the image space is air, $\det M = AD - BC = n_{vit}$.
 A ray is defined as $(y, u)$ with $y$ the height of the ray and $u$ its angle with the optical axis.
 
@@ -23,11 +23,11 @@ $$(A + pC) y + (B + pD) u = 0 \Rightarrow u = -\frac{A + pC}{B + pD} y$$
 
 Its angle in air after the cornea is $\theta = Cy + Du$, so
 
-$$\theta = \frac{C (B + pD) - D (A + pC)}{B + pD} y = \frac{AD - BC}{B + pD} y = -\frac{n_{vit}}{B + pD} y$$
+$$\theta = \frac{C (B + pD) - D (A + pC)}{B + pD} y = -\frac{AD - BC}{B + pD} y = -\frac{n_{vit}}{B + pD} y$$
 
 Let $s$ be the retinal distance subtended per radian of camera eccentricity:
 
-$$s = \frac{\mathrm{d} y}{\mathrm{d} \theta} = -\frac{B + pD}{n_{vit}}$$
+$$s \equiv \left| \frac{\mathrm{d} y}{\mathrm{d} \theta} \right| = \frac{B + pD}{n_{vit}}$$
 
 The true retinal distance is then
 
@@ -45,12 +45,12 @@ Let $(y_S, u_S)$ be a point in the physical pupil.
 Since we are tracing chief rays, $y_S = 0$ and the ray crosses the pupil plane in $(0, u_S)$.
 At the entrance pupil plane, the ray is 
 
-$$
+```math
 \begin{bmatrix} y_E \\ u_E \end{bmatrix} = 
 \begin{bmatrix} 1 & p \\ 0 & 1 \end{bmatrix} M_{ant} \begin{bmatrix} 0 \\ u_S \end{bmatrix} =
 \begin{bmatrix} B_{ant} u_S + p D_{ant} u_S \\ D_{ant} u_S \end{bmatrix}
 $$
-
+```
 Since chief rays are defined to pass through the entrance pupil, $y_E = 0$, so 
 
 $$(B_{ant} + pD_{ant}) u_S = 0 \Rightarrow p = -\frac{B_{ant}}{D_{ant}}.$$
