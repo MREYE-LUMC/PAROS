@@ -47,6 +47,7 @@ PAROS defines three camera models: a simplified paraxial model, a telecentric mo
 
 The paraxial model is the model used for the original implementation of PAROS described in the article mentioned above.
 This model works well for some classical fundus cameras, but appears to be unreliable for some other cameras, especially for cameras with a telecentric design.
+Since the original publication, PAROS has been extended with a [telecentric model](#telecentric-model) as well.
 
 The table below lists known camera calibration constants; this can be added upon by other contributors. 
 
@@ -62,12 +63,14 @@ The table below lists known camera calibration constants; this can be added upon
 ### Telecentric model
 
 The telecentric design of a fundus camera results in a linear relationship between the eccentricity of the incoming ray and the corresponding position on the sensor.
+A telecentric camera maps the angle $\theta$ of an incoming chief ray linearly to a position on the sensor $x = k \theta$, with a scaling factor $k$ [px/rad] that does not change with focus.
 The telecentric camera model uses this relation to calculate the magnification from ray angles.
 The derivation of the magnification for a telecentric camera is described in [docs/telecentric-camera.md](docs/telecentric-camera.md).
 
 ### Focus-dependent model
 
 The focus-dependent model is an extension of the telecentric model that takes into account the effect of focus on the magnification.
+This model maps a chief ray angle $\theta$ to a position on the sensor $x = (k + \alpha SE) \theta$, with $k$ the scaling factor [px/rad] at emmetropia, $SE$ the spherical equivalent of the eye and $\alpha$ the linear dependence of the scaling factor on the spherical equivalent.
 Since the angular magnification of this camera model depends on the focus, the camera is not telecentric in the strict sense.
 
 ## Referencing
