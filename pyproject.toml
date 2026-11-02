@@ -55,11 +55,11 @@ default-version = "0.0.0+unknown"
 
 [tool.hatch.envs.hatch-check-code]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.16.5"]
+dependencies = ["ruff==0.17.3"]
 
 [tool.hatch.envs.hatch-check-fmt]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.16.5"]
+dependencies = ["ruff==0.17.3"]
 
 [tool.ruff]
 preview = true
