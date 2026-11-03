@@ -8,10 +8,11 @@ description = "PARaxial Optical fundus Scaling (PAROS)"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [
-    { name = "Lennart J. Pors", email = "l.j.pors@lumc.nl" },
-    { name = "Jan-Willem M. Beenakker", email = "j.w.m.beenakker@lumc.nl" },
-    { name = "Corné Haasjes", email = "c.haasjes@lumc.nl" },
+    { name = "Lennart J. Pors" },
+    { name = "Jan-Willem M. Beenakker" },
+    { name = "Corné Haasjes" },
 ]
+maintainers = [{ name = "MReye research group", email = "software@mreye.nl" }]
 keywords = ["paraxial optics", "ophthalmology"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
